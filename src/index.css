@@ -9,6 +9,7 @@
 
   html {
     scroll-behavior: smooth;
+    height: 100%;
   }
 
   body {
@@ -16,6 +17,14 @@
     transition:
       background-color 0.3s ease,
       color 0.3s ease;
+    height: 100%;
+    /* Prevent layout shift when mobile keyboard opens */
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    overflow-y: auto;
   }
 
   .dark body {
