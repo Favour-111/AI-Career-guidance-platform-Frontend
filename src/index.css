@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-800 font-sans antialiased;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .dark body {
+    @apply bg-dark-bg text-gray-100;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-dark-surface;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary rounded-full;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm
+           hover:bg-primary-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-card disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-2 border-primary text-primary font-semibold text-sm
+           hover:bg-primary hover:text-white active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 font-medium text-sm
+           hover:bg-gray-100 dark:hover:bg-dark-card active:scale-95 transition-all duration-200;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white dark:bg-dark-card rounded-2xl shadow-card p-6 transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  /* Form inputs */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface
+           text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm
+           focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent
+           transition-all duration-200;
+  }
+
+  .input-label {
+    @apply block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary/10 text-primary dark:bg-primary/20 dark:text-secondary;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  /* Section titles */
+  .section-title {
+    @apply text-xl font-bold text-primary dark:text-white;
+  }
+
+  /* Sidebar nav item — legacy kept for compatibility */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer
+           text-white/60 hover:bg-white/10 hover:text-white;
+  }
+
+  .nav-item-active {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer text-white;
+  }
+
+  /* Skill bar */
+  .skill-bar {
+    @apply h-2 rounded-full bg-gray-100 dark:bg-dark-border overflow-hidden;
+  }
+
+  .skill-bar-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-secondary-light to-primary transition-all duration-700;
+  }
+
+  /* Progress ring */
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  /* Match score colors */
+  .match-high {
+    @apply text-green-600 dark:text-green-400;
+  }
+  .match-medium {
+    @apply text-yellow-600 dark:text-yellow-400;
+  }
+  .match-low {
+    @apply text-red-500 dark:text-red-400;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+
+  .bg-gradient-brand {
+    @apply bg-gradient-to-br from-primary-900 via-primary to-secondary;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+}
+
+/* Chart tooltip override */
+.recharts-tooltip-wrapper {
+  @apply !shadow-card-hover !rounded-xl;
+}
+
+/* Dark mode transitions */
+.dark .card {
+  @apply bg-dark-card border-dark-border;
+}
