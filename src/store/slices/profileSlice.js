@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
+import { logoutUser, loginUser, registerUser } from "./authSlice";
 
 export const fetchProfile = createAsyncThunk(
   "profile/fetch",
@@ -117,6 +118,19 @@ const profileSlice = createSlice({
       .addCase(updateSkills.rejected, (state, action) => {
         state.saving = false;
         state.error = action.payload;
+      })
+      // Clear profile when user logs out or a different user logs in
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.profile = null;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state) => {
+        state.profile = null;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.profile = null;
+        state.error = null;
       });
   },
 });

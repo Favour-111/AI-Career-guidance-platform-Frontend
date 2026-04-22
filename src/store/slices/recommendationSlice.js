@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
+import { logoutUser, loginUser, registerUser } from "./authSlice";
 
 export const generateRecommendations = createAsyncThunk(
   "recommendations/generate",
@@ -74,6 +75,19 @@ const recommendationSlice = createSlice({
       .addCase(generateRecommendations.rejected, (state, action) => {
         state.generating = false;
         state.error = action.payload;
+      })
+      // Clear recommendations when user logs out or a different user logs in
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.recommendation = null;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state) => {
+        state.recommendation = null;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.recommendation = null;
+        state.error = null;
       });
   },
 });
