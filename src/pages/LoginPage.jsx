@@ -156,15 +156,6 @@ export default function LoginPage() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-primary/5 dark:bg-primary/10 rounded-xl">
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
-              Demo credentials:
-            </p>
-            <p className="text-xs text-primary dark:text-secondary">
-              admin@careerguidance.ai / Admin@1234
-            </p>
-          </div>
         </div>
       </div>
     </div>
