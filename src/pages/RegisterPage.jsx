@@ -78,7 +78,7 @@ export default function RegisterPage() {
           : "";
 
   return (
-    <div className="min-h-screen flex bg-surface dark:bg-dark-bg">
+    <div className="min-h-screen flex  dark:bg-dark-bg">
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand items-center justify-center p-12 relative overflow-hidden">
         <div className="relative text-white text-center max-w-md z-10">

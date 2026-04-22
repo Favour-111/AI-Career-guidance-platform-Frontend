@@ -87,9 +87,9 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="btn-ghost text-sm">
+            {/* <Link to="/login" className="btn-ghost text-sm">
               Sign In
-            </Link>
+            </Link> */}
             <Link to="/register" className="btn-primary text-sm">
               Get Started Free
             </Link>
