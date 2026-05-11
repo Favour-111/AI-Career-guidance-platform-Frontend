@@ -2,6 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../services/api";
 import { logoutUser, loginUser, registerUser } from "./authSlice";
 
+const PROFILE_STALE_MS = 2 * 60 * 1000; // re-fetch if older than 2 minutes
+
 export const fetchProfile = createAsyncThunk(
   "profile/fetch",
   async (_, { rejectWithValue }) => {
@@ -15,10 +17,11 @@ export const fetchProfile = createAsyncThunk(
     }
   },
   {
-    // Skip fetch if profile is already loaded — avoids white flash on navigation
     condition: (_, { getState }) => {
-      const { profile } = getState().profile;
-      return profile === null;
+      const { profile, lastFetched, loading } = getState().profile;
+      if (loading) return false; // already in-flight
+      if (!profile || !lastFetched) return true; // never fetched
+      return Date.now() - lastFetched > PROFILE_STALE_MS; // stale
     },
   },
 );
@@ -58,6 +61,7 @@ const profileSlice = createSlice({
     loading: false,
     saving: false,
     error: null,
+    lastFetched: null,
   },
   reducers: {
     clearProfileError: (state) => {
@@ -83,6 +87,7 @@ const profileSlice = createSlice({
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.profile = action.payload.profile;
+        state.lastFetched = Date.now();
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;

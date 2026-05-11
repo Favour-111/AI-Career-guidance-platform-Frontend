@@ -12,47 +12,23 @@ import {
   LogOut,
   X,
   BrainCircuit,
-  ChevronRight,
   Bookmark,
+  Settings,
+  HelpCircle,
+  Zap,
+  ChevronRight,
+  MapPin,
+  Briefcase,
 } from "lucide-react";
 
 const navItems = [
-  {
-    to: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    desc: "Overview & stats",
-  },
-  {
-    to: "/profile",
-    label: "My Profile",
-    icon: User,
-    desc: "Skills & education",
-  },
-  {
-    to: "/recommendations",
-    label: "Recommendations",
-    icon: Lightbulb,
-    desc: "AI career matches",
-  },
-  {
-    to: "/market-trends",
-    label: "Market Trends",
-    icon: TrendingUp,
-    desc: "Salary & demand",
-  },
-  {
-    to: "/learning",
-    label: "Learning Paths",
-    icon: BookOpen,
-    desc: "Courses & resources",
-  },
-  {
-    to: "/bookmarks",
-    label: "Bookmarks",
-    icon: Bookmark,
-    desc: "Saved careers",
-  },
+  { to: "/dashboard",       label: "Dashboard",       icon: LayoutDashboard },
+  { to: "/profile",         label: "My Profile",       icon: User },
+  { to: "/recommendations", label: "Recommendations",  icon: Lightbulb },
+  { to: "/market-trends",   label: "Market Trends",    icon: TrendingUp },
+  { to: "/learning",        label: "Learning Paths",   icon: BookOpen },
+  { to: "/jobs",            label: "Job Listings",     icon: Briefcase },
+  { to: "/bookmarks",       label: "Bookmarks",        icon: Bookmark },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -63,7 +39,6 @@ export default function Sidebar({ isOpen, onClose }) {
   const { profile } = useSelector((s) => s.profile);
 
   const completion = profile?.completionPercentage || 0;
-  const skillCount = profile?.skills?.length || 0;
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -71,287 +46,136 @@ export default function Sidebar({ isOpen, onClose }) {
     navigate("/");
   };
 
-  const NavItem = ({ to, label, icon: Icon, desc }) => {
+  const NavItem = ({ to, label, icon: Icon }) => {
     const active = location.pathname === to;
     return (
-      <NavLink
-        to={to}
-        onClick={onClose}
-        className="group flex items-center gap-3 px-3 py-[9px] rounded-xl transition-all duration-200 relative overflow-hidden"
-        style={
-          active
-            ? {
-                background: "rgba(73,136,196,0.2)",
-                borderLeft: "2.5px solid #BDE8F5",
-              }
-            : {}
-        }
-      >
-        {!active && (
-          <span
-            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-            style={{ background: "rgba(255,255,255,0.05)" }}
-          />
-        )}
-        <span
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
-          style={{
-            background: active
-              ? "rgba(73,136,196,0.35)"
-              : "rgba(255,255,255,0.07)",
-          }}
-        >
-          <Icon
-            size={15}
-            style={{ color: active ? "#BDE8F5" : "rgba(189,232,245,0.45)" }}
-          />
+      <NavLink to={to} onClick={onClose}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
+        style={active
+          ? { background: "#f0f4ff", color: "#0F2854" }
+          : { color: "#6b7280" }}>
+        <Icon size={17}
+          style={{ color: active ? "#0F2854" : "#9ca3af", flexShrink: 0 }}
+          strokeWidth={active ? 2.2 : 1.8} />
+        <span className="text-[13.5px] font-semibold leading-none"
+          style={{ color: active ? "#0F2854" : "#6b7280" }}>
+          {label}
         </span>
-        <span className="flex-1 min-w-0">
-          <span
-            className="block text-[13px] font-semibold leading-tight"
-            style={{ color: active ? "#fff" : "rgba(255,255,255,0.7)" }}
-          >
-            {label}
-          </span>
-          <span
-            className="block text-[10px] leading-tight mt-[2px] truncate"
-            style={{
-              color: active
-                ? "rgba(189,232,245,0.5)"
-                : "rgba(189,232,245,0.22)",
-            }}
-          >
-            {desc}
-          </span>
-        </span>
-        {active && (
-          <span
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ background: "#4988C4" }}
-          />
-        )}
       </NavLink>
     );
   };
 
   return (
-    <aside
-      className={`
-        fixed top-0 left-0 z-30 h-full w-[250px] flex flex-col select-none
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
-      `}
-      style={{
-        background:
-          "linear-gradient(175deg, #0D2347 0%, #081629 55%, #060E1F 100%)",
-      }}
-    >
-      {/* Top shimmer */}
-      <div
-        className="h-[2px] w-full flex-shrink-0"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent 0%, #4988C4 50%, transparent 100%)",
-        }}
-      />
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={onClose} />
+      )}
 
-      {/* ── LOGO ── */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #1C4D8D 0%, #0F2854 100%)",
-              boxShadow:
-                "0 0 0 1.5px rgba(189,232,245,0.2), 0 4px 14px rgba(9,27,58,0.6)",
-            }}
-          >
-            <BrainCircuit
-              className="w-[18px] h-[18px]"
-              style={{ color: "#BDE8F5" }}
-            />
-          </div>
-          <div>
-            <p className="text-white font-extrabold text-[15px] leading-none tracking-tight">
-              CareerAI
-            </p>
-            <p
-              className="text-[9.5px] font-semibold uppercase tracking-[0.13em] mt-[3px]"
-              style={{ color: "rgba(189,232,245,0.4)" }}
-            >
-              Guidance Platform
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
-          style={{ color: "rgba(189,232,245,0.45)" }}
-        >
-          <X className="w-[15px] h-[15px]" />
-        </button>
-      </div>
+      <aside
+        className={`fixed top-0 left-0 z-30 h-full w-64 flex flex-col select-none
+          transform transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        style={{ background: "#ffffff", borderRight: "1px solid #f0f0f0" }}>
 
-      {/* ── PROFILE CARD ── */}
-      <div
-        className="mx-3 mb-4 rounded-2xl p-4"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(189,232,245,0.09)",
-        }}
-      >
-        <div className="flex items-center gap-3 mb-3">
-          <div
-            className="w-[42px] h-[42px] rounded-xl flex items-center justify-center font-bold text-[15px] text-white flex-shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #4988C4 0%, #1C4D8D 100%)",
-              boxShadow: "0 0 0 2px rgba(189,232,245,0.15)",
-            }}
-          >
-            {user?.name?.charAt(0).toUpperCase()}
+        {/* ── LOGO ── */}
+        <div className="flex items-center justify-between px-5 pt-6 pb-5 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "#0F2854" }}>
+              <BrainCircuit className="w-[18px] h-[18px] text-white" />
+            </div>
+            <div>
+              <p className="font-black text-[17px] leading-none tracking-tight" style={{ color: "#0F2854" }}>
+                CareerAI.
+              </p>
+              <div className="flex items-center gap-1 mt-[3px]">
+                <MapPin size={9} style={{ color: "#4988C4" }} />
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#4988C4" }}>
+                  Nigeria
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-white font-bold text-[13px] leading-tight truncate">
-              {user?.name}
-            </p>
-            <p
-              className="text-[11px] truncate mt-[3px]"
-              style={{ color: "rgba(189,232,245,0.42)" }}
-            >
-              {user?.email}
-            </p>
-            {user?.role === "admin" && (
-              <span
-                className="inline-block mt-1 text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-[2px] rounded"
-                style={{
-                  background: "rgba(73,136,196,0.28)",
-                  color: "#BDE8F5",
-                }}
-              >
-                Admin
-              </span>
-            )}
-          </div>
+          <button onClick={onClose}
+            className="lg:hidden w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100"
+            style={{ color: "#9ca3af" }}>
+            <X size={15} />
+          </button>
         </div>
 
-        {/* Completion bar */}
-        <div>
-          <div className="flex justify-between items-center mb-[5px]">
-            <span
-              className="text-[10.5px] font-medium"
-              style={{ color: "rgba(189,232,245,0.45)" }}
-            >
-              Profile completion
-            </span>
-            <span
-              className="text-[10.5px] font-bold"
-              style={{
-                color: completion >= 80 ? "#BDE8F5" : "rgba(189,232,245,0.45)",
-              }}
-            >
-              {completion}%
-            </span>
-          </div>
-          <div
-            className="h-[5px] rounded-full overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.08)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${completion}%`,
-                background:
-                  completion >= 80
-                    ? "linear-gradient(90deg, #1C4D8D, #4988C4)"
-                    : "linear-gradient(90deg, #1C4D8D, #4988C4)",
-              }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-[7px]">
-            <span
-              className="text-[10px]"
-              style={{ color: "rgba(189,232,245,0.3)" }}
-            >
-              {skillCount} skill{skillCount !== 1 ? "s" : ""} added
-            </span>
-            <NavLink
-              to="/profile"
-              onClick={onClose}
-              className="text-[10px] font-semibold flex items-center gap-[2px] hover:opacity-75 transition-opacity"
-              style={{ color: "#4988C4" }}
-            >
-              {completion < 100 ? "Complete profile" : "View profile"}
-              <ChevronRight className="w-[10px] h-[10px]" />
-            </NavLink>
-          </div>
-        </div>
-      </div>
+        {/* ── MENU LABEL ── */}
+        <p className="px-5 mb-2 text-[10px] font-bold uppercase tracking-[0.14em]"
+          style={{ color: "#b0b8c4" }}>
+          Menu
+        </p>
 
-      {/* ── NAV LABEL ── */}
-      <p
-        className="px-5 mb-[7px] text-[9.5px] font-bold uppercase tracking-[0.14em]"
-        style={{ color: "rgba(189,232,245,0.25)" }}
-      >
-        Navigation
-      </p>
+        {/* ── NAV ── */}
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto pb-3">
+          {navItems.map((item) => <NavItem key={item.to} {...item} />)}
 
-      {/* ── MAIN NAV ── */}
-      <nav className="flex-1 px-3 space-y-[2px] overflow-y-auto pb-2">
-        {navItems.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
+          {user?.role === "admin" && (
+            <>
+              <div className="pt-4 pb-2 px-1">
+                <div className="h-px bg-gray-100" />
+                <p className="mt-2.5 text-[10px] font-bold uppercase tracking-[0.14em]"
+                  style={{ color: "#b0b8c4" }}>Admin</p>
+              </div>
+              <NavItem to="/admin" label="Admin Panel" icon={ShieldCheck} />
+            </>
+          )}
+        </nav>
 
-        {user?.role === "admin" && (
-          <>
-            <div className="pt-3 pb-[7px] px-1">
-              <div
-                className="h-px"
-                style={{ background: "rgba(189,232,245,0.07)" }}
-              />
-              <p
-                className="mt-[9px] text-[9.5px] font-bold uppercase tracking-[0.14em]"
-                style={{ color: "rgba(189,232,245,0.25)" }}
-              >
-                Admin
+        {/* ── COMPLETE PROFILE CARD — hidden once profile is 100% ── */}
+        {completion < 100 && (
+          <div className="mx-3 mb-4 rounded-2xl p-4 flex-shrink-0"
+            style={{ background: "#fff8f0", border: "1px solid #ffe8cc" }}>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "#fff0dc" }}>
+                <Zap size={14} style={{ color: "#f59e0b" }} />
+              </div>
+              <p className="font-black text-[13px] leading-tight" style={{ color: "#111827" }}>
+                Complete your profile
               </p>
             </div>
-            <NavItem
-              to="/admin"
-              label="Admin Panel"
-              icon={ShieldCheck}
-              desc="Users & analytics"
-            />
-          </>
+            <p className="text-[11px] leading-relaxed mb-3" style={{ color: "#9ca3af" }}>
+              Get sharper AI career matches. {completion}% done — keep going!
+            </p>
+            <NavLink to="/profile" onClick={onClose}
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[12px] font-bold transition-all hover:opacity-90"
+              style={{ background: "#111827", color: "#ffffff" }}>
+              <Zap size={12} />
+              Update profile
+            </NavLink>
+          </div>
         )}
-      </nav>
+        
 
-      {/* ── FOOTER / SIGN OUT ── */}
-      <div
-        className="px-3 py-3"
-        style={{ borderTop: "1px solid rgba(189,232,245,0.07)" }}
-      >
-        <button
-          onClick={handleLogout}
-          className="group w-full flex items-center gap-3 px-3 py-[9px] rounded-xl transition-all duration-200 relative overflow-hidden"
-        >
-          <span
-            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-            style={{ background: "rgba(239,68,68,0.09)" }}
-          />
-          <span
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative"
-            style={{ background: "rgba(239,68,68,0.13)" }}
-          >
-            <LogOut size={14} style={{ color: "rgba(252,165,165,0.75)" }} />
-          </span>
-          <span
-            className="text-[13px] font-semibold relative"
-            style={{ color: "rgba(252,165,165,0.75)" }}
-          >
-            Sign Out
-          </span>
-        </button>
-      </div>
-    </aside>
+        {/* ── FOOTER ── */}
+        <div className="px-3 pb-4 flex-shrink-0 space-y-0.5"
+          style={{ borderTop: "1px solid #f3f4f6" }}>
+          <div className="pt-2" />
+          {[
+            { icon: Settings, label: "Settings" },
+            { icon: HelpCircle, label: "Help & Support" },
+          ].map(({ icon: Icon, label }) => (
+            <button key={label}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-gray-50"
+              style={{ color: "#6b7280" }}>
+              <Icon size={16} style={{ color: "#9ca3af" }} strokeWidth={1.8} />
+              <span className="text-[13px] font-medium">{label}</span>
+            </button>
+          ))}
+          <button onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-red-50 group">
+            <LogOut size={16} style={{ color: "#f87171" }} strokeWidth={1.8} />
+            <span className="text-[13px] font-medium" style={{ color: "#f87171" }}>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
+

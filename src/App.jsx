@@ -19,6 +19,7 @@ import RecommendationsPage from "./pages/RecommendationsPage";
 import MarketTrendsPage from "./pages/MarketTrendsPage";
 import LearningPage from "./pages/LearningPage";
 import BookmarksPage from "./pages/BookmarksPage";
+import JobsPage from "./pages/JobsPage";
 import AdminPanel from "./pages/AdminPanel";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -92,6 +93,7 @@ function App() {
           <Route path="/market-trends" element={<MarketTrendsPage />} />
           <Route path="/learning" element={<LearningPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route path="/jobs" element={<JobsPage />} />
         </Route>
 
         {/* Admin only */}

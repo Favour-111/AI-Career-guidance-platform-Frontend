@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRecommendations } from "../store/slices/recommendationSlice";
 import CareerCard from "../components/career/CareerCard";
-import Spinner from "../components/common/Spinner";
 import { Link } from "react-router-dom";
 import { Bookmark, Zap, ArrowRight } from "lucide-react";
 
@@ -23,83 +22,63 @@ export default function BookmarksPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-slide-up">
-      {/* Header banner */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, #0F2854 0%, #1C4D8D 100%)",
-        }}
-      >
-        <div
-          className="h-1 w-full"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, #4988C4, transparent)",
-          }}
-        />
-        <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{
-                  background: "rgba(189,232,245,0.12)",
-                  border: "1px solid rgba(189,232,245,0.18)",
-                }}
-              >
-                <Bookmark className="w-4 h-4" style={{ color: "#BDE8F5" }} />
-              </div>
-              <span
-                className="text-xs font-semibold uppercase tracking-wider"
-                style={{ color: "rgba(189,232,245,0.55)" }}
-              >
-                Saved Careers
-              </span>
+      {/* ── HEADER ── */}
+      <div className="relative rounded-2xl overflow-hidden"
+        style={{ background: "#0F2854" }}>
+        <div className="h-px w-full" style={{ background: "rgba(189,232,245,0.12)" }} />
+        <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(189,232,245,0.12)", border: "1px solid rgba(189,232,245,0.15)" }}>
+              <Bookmark className="w-5 h-5" style={{ color: "#BDE8F5" }} />
             </div>
-            <h1 className="text-2xl font-extrabold text-white mb-1">
-              My Bookmarks
-            </h1>
-            <p className="text-sm" style={{ color: "rgba(189,232,245,0.65)" }}>
-              Careers you've saved for later — revisit and compare anytime.
-            </p>
+            <div>
+              <h1 className="text-xl font-black text-white">My Bookmarks</h1>
+              <p className="text-sm" style={{ color: "rgba(189,232,245,0.65)" }}>Careers you've saved for later revisit anytime.</p>
+            </div>
           </div>
-          <div
-            className="px-4 py-2.5 rounded-xl flex items-center gap-2 flex-shrink-0"
-            style={{
-              background: "rgba(189,232,245,0.1)",
-              border: "1px solid rgba(189,232,245,0.15)",
-            }}
-          >
+          <div className="px-4 py-2.5 rounded-xl flex items-center gap-2 flex-shrink-0"
+            style={{ background: "rgba(189,232,245,0.1)", border: "1px solid rgba(189,232,245,0.15)" }}>
             <Bookmark className="w-4 h-4" style={{ color: "#BDE8F5" }} />
-            <span className="text-white font-bold text-lg leading-none">
-              {bookmarkedIds.length}
-            </span>
-            <span
-              className="text-sm font-medium"
-              style={{ color: "rgba(189,232,245,0.6)" }}
-            >
-              saved
-            </span>
+            <span className="text-white font-black text-xl leading-none">{bookmarkedIds.length}</span>
+            <span className="text-sm font-medium" style={{ color: "rgba(189,232,245,0.6)" }}>saved</span>
           </div>
         </div>
+        <div className="h-px w-full" style={{ background: "rgba(189,232,245,0.06)" }} />
       </div>
 
       {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
+        <div className="space-y-4 animate-pulse">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-5"
+              style={{ border: "1px solid #eef3fa", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 rounded-lg" style={{ width: `${55 + i * 7}%`, background: "#f1f5f9" }} />
+                  <div className="h-3.5 w-28 rounded-md" style={{ background: "#f8fafc" }} />
+                </div>
+                <div className="h-6 w-16 rounded-full flex-shrink-0" style={{ background: "#f1f5f9" }} />
+              </div>
+              <div className="space-y-1.5 mb-4">
+                <div className="h-3 w-full rounded-md" style={{ background: "#f8fafc" }} />
+                <div className="h-3 w-4/5 rounded-md" style={{ background: "#f8fafc" }} />
+              </div>
+              <div className="flex gap-2 mb-4">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="h-6 w-16 rounded-lg" style={{ background: "#f1f5f9" }} />
+                ))}
+              </div>
+              <div className="h-1.5 w-full rounded-full" style={{ background: "#f1f5f9" }} />
+            </div>
+          ))}
         </div>
       ) : bookmarked.length === 0 ? (
-        <div className="card text-center py-16">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "rgba(15,40,84,0.06)" }}
-          >
-            <Bookmark className="w-7 h-7 text-gray-300" />
+        <div className="text-center py-16 rounded-2xl" style={{ background: "#fff", border: "1px solid #eef3fa" }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "#f0f5ff" }}>
+            <Bookmark className="w-7 h-7" style={{ color: "#4988C4" }} />
           </div>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">
-            No bookmarks yet
-          </h3>
+          <h3 className="text-lg font-black mb-1" style={{ color: "#0F2854" }}>No bookmarks yet</h3>
           <p className="text-sm text-gray-400 mb-6 max-w-xs mx-auto">
             {bookmarkedIds.length > 0 && !recommendation
               ? "Generate your AI recommendations first, then your bookmarked careers will appear here."
@@ -109,7 +88,7 @@ export default function BookmarksPage() {
             to="/recommendations"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105"
             style={{
-              background: "linear-gradient(135deg, #0F2854, #1C4D8D)",
+              background: "#0F2854",
               boxShadow: "0 4px 16px rgba(15,40,84,0.25)",
             }}
           >
@@ -120,20 +99,14 @@ export default function BookmarksPage() {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              <span className="font-semibold text-gray-700 dark:text-gray-200">
-                {bookmarked.length}
-              </span>{" "}
-              saved {bookmarked.length === 1 ? "career" : "careers"}
+          <div className="flex items-center justify-between px-1">
+            <p className="text-sm font-semibold" style={{ color: "#0F2854" }}>
+              {bookmarked.length} saved {bookmarked.length === 1 ? "career" : "careers"}
             </p>
-            <Link
-              to="/recommendations"
-              className="text-sm font-semibold flex items-center gap-1 transition-colors"
-              style={{ color: "#1C4D8D" }}
-            >
-              Browse all
-              <ArrowRight className="w-3.5 h-3.5" />
+            <Link to="/recommendations"
+              className="text-sm font-bold flex items-center gap-1 hover:underline transition-colors"
+              style={{ color: "#1C4D8D" }}>
+              Browse all <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           <div className="grid md:grid-cols-2 gap-4">
