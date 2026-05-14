@@ -16,7 +16,7 @@ import {
 
 const features = [
   {
-    icon: BrainCircuit,
+    icon: Briefcase,
     title: "AI-Powered Matching",
     desc: "Our ML engine analyzes your skills and interests to recommend the most fitting career paths in Nigeria with precision.",
     color: "#0F2854", bg: "#e8f0fb",
