@@ -27,7 +27,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Fix mobile keyboard expanding layout  svh stays fixed when keyboard opens */
+  /* Fix mobile keyboard expanding layout — svh stays fixed when keyboard opens */
   .min-h-screen {
     min-height: 100svh !important;
   }
@@ -118,7 +118,7 @@
     color: #0F2854;
   }
 
-  /* Sidebar nav item  legacy kept for compatibility */
+  /* Sidebar nav item — legacy kept for compatibility */
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer
            text-white/60 hover:bg-white/10 hover:text-white;
@@ -128,7 +128,7 @@
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer text-white;
   }
 
-  /* List item row  task/career list style */
+  /* List item row — task/career list style */
   .list-item {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all;
     border: 1px solid #eef3fa;

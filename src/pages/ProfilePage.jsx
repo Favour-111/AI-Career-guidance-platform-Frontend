@@ -266,7 +266,7 @@ export default function ProfilePage() {
     const result = await dispatch(updateSkills(skills));
     if (updateSkills.fulfilled.match(result)) {
       toast.success("Skills updated!");
-      // Do NOT regenerate recommendations here  save profile (About tab) triggers it.
+      // Do NOT regenerate recommendations here — save profile (About tab) triggers it.
       // Triggering here as well burns through the rate limit quickly.
     } else {
       toast.error("Failed to update skills");
@@ -567,7 +567,7 @@ export default function ProfilePage() {
                     <select className="input-field" value={form.fieldOfStudy}
                       onChange={(e) => setForm({ ...form, fieldOfStudy: e.target.value })}>
                       {FIELD_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>{opt === "" ? " Select your field " : opt}</option>
+                        <option key={opt} value={opt}>{opt === "" ? "— Select your field —" : opt}</option>
                       ))}
                     </select>
                   </div>
@@ -766,7 +766,7 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md"
                             style={{ background: "#f0f4ff", color: "#1C4D8D" }}>
-                            {edu.startYear || "?"}  {edu.current ? "Present" : edu.endYear || "?"}
+                            {edu.startYear || "?"} — {edu.current ? "Present" : edu.endYear || "?"}
                           </span>
                           {edu.current && (
                             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md"
@@ -802,7 +802,7 @@ export default function ProfilePage() {
                 </span>
               </div>
               <div className="p-5" style={{ borderBottom: "1px solid #f0f5fb" }}>
-                <p className="text-xs text-gray-400 mb-3">Select all that apply  used to improve your AI recommendations</p>
+                <p className="text-xs text-gray-400 mb-3">Select all that apply — used to improve your AI recommendations</p>
                 <div className="flex flex-wrap gap-2">
                   {INTEREST_SUGGESTIONS.map((interest) => {
                     const selected = form.interests.includes(interest);

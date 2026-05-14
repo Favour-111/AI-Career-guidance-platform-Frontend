@@ -17,7 +17,7 @@ export default function AppLayout() {
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
 
-  // Fetch profile on mount  thunk skips if data is still fresh (< 2 min old)
+  // Fetch profile on mount — thunk skips if data is still fresh (< 2 min old)
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
