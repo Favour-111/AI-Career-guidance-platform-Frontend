@@ -21,6 +21,9 @@ import LearningPage from "./pages/LearningPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import JobsPage from "./pages/JobsPage";
 import AdminPanel from "./pages/AdminPanel";
+import ChatbotPage from "./pages/ChatbotPage";
+import SettingsPage from "./pages/SettingsPage";
+import HelpSupportPage from "./pages/HelpSupportPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Spinner from "./components/common/Spinner";
@@ -63,7 +66,7 @@ function App() {
         <div className="text-center">
           <Spinner size="lg" />
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            Loading CareerAI…
+            Loading Career Guidiance…
           </p>
         </div>
       </div>
@@ -94,6 +97,9 @@ function App() {
           <Route path="/learning" element={<LearningPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/chatbot" element={<ChatbotPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/help-support" element={<HelpSupportPage />} />
         </Route>
 
         {/* Admin only */}

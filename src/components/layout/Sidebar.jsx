@@ -12,13 +12,13 @@ import {
   LogOut,
   X,
   BrainCircuit,
+  Briefcase,
   Bookmark,
   Settings,
   HelpCircle,
   Zap,
   ChevronRight,
   MapPin,
-  Briefcase,
 } from "lucide-react";
 
 const navItems = [
@@ -27,9 +27,11 @@ const navItems = [
   { to: "/recommendations", label: "Recommendations",  icon: Lightbulb },
   { to: "/market-trends",   label: "Market Trends",    icon: TrendingUp },
   { to: "/learning",        label: "Learning Paths",   icon: BookOpen },
-  { to: "/jobs",            label: "Job Listings",     icon: Briefcase },
+  { to: "/chatbot",         label: "AI Chatbot",        icon: BrainCircuit },
   { to: "/bookmarks",       label: "Bookmarks",        icon: Bookmark },
 ];
+
+const OWNER_ADMIN_EMAIL = "horbahstech@gmail.com";
 
 export default function Sidebar({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -37,6 +39,8 @@ export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
   const { user } = useSelector((s) => s.auth);
   const { profile } = useSelector((s) => s.profile);
+  const isOwnerAdmin = user?.email?.toLowerCase() === OWNER_ADMIN_EMAIL;
+  const visibleNavItems = isOwnerAdmin ? [] : navItems;
 
   const completion = profile?.completionPercentage || 0;
 
@@ -84,11 +88,11 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "#0F2854" }}>
-              <BrainCircuit className="w-[18px] h-[18px] text-white" />
+              <Briefcase className="w-[18px] h-[18px] text-white" />
             </div>
             <div>
               <p className="font-black text-[17px] leading-none tracking-tight" style={{ color: "#0F2854" }}>
-                CareerAI.
+                Career Guidiance.
               </p>
               <div className="flex items-center gap-1 mt-[3px]">
                 <MapPin size={9} style={{ color: "#4988C4" }} />
@@ -108,14 +112,14 @@ export default function Sidebar({ isOpen, onClose }) {
         {/* ── MENU LABEL ── */}
         <p className="px-5 mb-2 text-[10px] font-bold uppercase tracking-[0.14em]"
           style={{ color: "#b0b8c4" }}>
-          Menu
+          {isOwnerAdmin ? "Admin" : "Menu"}
         </p>
 
         {/* ── NAV ── */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto pb-3">
-          {navItems.map((item) => <NavItem key={item.to} {...item} />)}
+          {visibleNavItems.map((item) => <NavItem key={item.to} {...item} />)}
 
-          {user?.role === "admin" && (
+          {isOwnerAdmin && (
             <>
               <div className="pt-4 pb-2 px-1">
                 <div className="h-px bg-gray-100" />
@@ -127,8 +131,8 @@ export default function Sidebar({ isOpen, onClose }) {
           )}
         </nav>
 
-        {/* ── COMPLETE PROFILE CARD — hidden once profile is 100% ── */}
-        {completion < 100 && (
+        {/* ── COMPLETE PROFILE CARD  hidden once profile is 100% ── */}
+        {!isOwnerAdmin && completion < 100 && (
           <div className="mx-3 mb-4 rounded-2xl p-4 flex-shrink-0"
             style={{ background: "#fff8f0", border: "1px solid #ffe8cc" }}>
             <div className="flex items-center gap-2 mb-1.5">
@@ -141,7 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
               </p>
             </div>
             <p className="text-[11px] leading-relaxed mb-3" style={{ color: "#9ca3af" }}>
-              Get sharper AI career matches. {completion}% done — keep going!
+              Get sharper AI career matches. {completion}% done  keep going!
             </p>
             <NavLink to="/profile" onClick={onClose}
               className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[12px] font-bold transition-all hover:opacity-90"
@@ -158,10 +162,14 @@ export default function Sidebar({ isOpen, onClose }) {
           style={{ borderTop: "1px solid #f3f4f6" }}>
           <div className="pt-2" />
           {[
-            { icon: Settings, label: "Settings" },
-            { icon: HelpCircle, label: "Help & Support" },
-          ].map(({ icon: Icon, label }) => (
+            // { icon: Settings, label: "Settings", to: "/settings" },
+            { icon: HelpCircle, label: "Help & Support", to: "/help-support" },
+          ].filter(() => !isOwnerAdmin).map(({ icon: Icon, label, to }) => (
             <button key={label}
+              onClick={() => {
+                navigate(to);
+                onClose?.();
+              }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-gray-50"
               style={{ color: "#6b7280" }}>
               <Icon size={16} style={{ color: "#9ca3af" }} strokeWidth={1.8} />

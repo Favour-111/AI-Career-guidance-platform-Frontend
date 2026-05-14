@@ -5,14 +5,16 @@ import { loginUser, clearError } from "../store/slices/authSlice";
 import toast from "react-hot-toast";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
-import { BrainCircuit, Mail, Lock, ArrowRight, MapPin, TrendingUp, Target, BookOpen } from "lucide-react";
+import { Briefcase, Mail, Lock, ArrowRight, MapPin, TrendingUp, Target, BookOpen } from "lucide-react";
 
 const PERKS = [
   { icon: Target, label: "AI Career Matching" },
   { icon: TrendingUp, label: "Nigeria Market Insights" },
   { icon: BookOpen, label: "Personalized Learning Paths" },
-  { icon: BrainCircuit, label: "Skill Gap Analysis" },
+  { icon: Briefcase, label: "Skill Gap Analysis" },
 ];
+
+const OWNER_ADMIN_EMAIL = "horbahstech@gmail.com";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -39,7 +41,10 @@ export default function LoginPage() {
     const result = await dispatch(loginUser(form));
     if (loginUser.fulfilled.match(result)) {
       toast.success(`Welcome back, ${result.payload.user.name.split(" ")[0]}!`);
-      navigate("/dashboard");
+      const isOwnerAdmin =
+        result.payload.user?.email?.toLowerCase() === OWNER_ADMIN_EMAIL;
+
+      navigate(isOwnerAdmin ? "/admin" : "/dashboard");
     } else {
       toast.error(result.payload || "Login failed");
     }
@@ -61,7 +66,7 @@ export default function LoginPage() {
         <div className="relative z-10 text-white text-center max-w-md">
           <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-5"
             style={{ background: "rgba(189,232,245,0.12)", border: "1.5px solid rgba(189,232,245,0.2)" }}>
-            <BrainCircuit className="w-8 h-8 text-white" />
+            <Briefcase className="w-8 h-8 text-white" />
           </div>
           <div className="flex items-center justify-center gap-1.5 mb-3">
             <MapPin className="w-3.5 h-3.5" style={{ color: "#BDE8F5" }} />
@@ -93,9 +98,9 @@ export default function LoginPage() {
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: "#0F2854" }}>
-              <BrainCircuit className="w-5 h-5 text-white" />
+              <Briefcase className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-xl" style={{ color: "#0F2854" }}>CareerAI</span>
+            <span className="font-black text-xl" style={{ color: "#0F2854" }}>Career Guidiance</span>
           </div>
 
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0F2854" }}>Sign in to your account</h1>

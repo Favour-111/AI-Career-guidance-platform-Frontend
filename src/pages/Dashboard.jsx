@@ -49,11 +49,28 @@ const QUICK_ACTIONS = [
   { label: "Arts & Design", icon: Palette, color: "#875c00", bg: "#fdf5e2", path: "/market-trends" },
 ];
 
+const normalizeSalaryAmount = (value) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  if (amount >= 1000 && amount < 1000000) return amount * 1000;
+  return amount;
+};
+
+const formatSalaryRange = (salaryRange) => {
+  if (!salaryRange) return null;
+  const min = normalizeSalaryAmount(salaryRange.min);
+  const max = normalizeSalaryAmount(salaryRange.max);
+  if (!min && !max) return null;
+  if (min && max) return `₦${(min / 1000000).toFixed(1)}M-₦${(max / 1000000).toFixed(1)}M/yr`;
+  const value = min || max;
+  return `₦${(value / 1000000).toFixed(1)}M/yr`;
+};
+
 export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
-  const { profile } = useSelector((s) => s.profile);
+  const { profile, loading: profileLoading } = useSelector((s) => s.profile);
   const { recommendation, loading: recLoading } = useSelector((s) => s.recommendations);
   const [activities, setActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
@@ -81,6 +98,22 @@ export default function Dashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const initialContentLoading =
+    (profileLoading || recLoading || loadingActivities) &&
+    !profile &&
+    !recommendation &&
+    activities.length === 0;
+
+  if (initialContentLoading) {
+    return (
+      <div className="max-w-7xl mx-auto min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <Spinner size="lg" />
+          <p className="mt-3 text-sm text-gray-500">Loading dashboard content...</p>
+        </div>
+      </div>
+    );
+  }
 
   const pendingActions = [
     {
@@ -331,6 +364,7 @@ export default function Dashboard() {
                   const scoreColor = score >= 70 ? "#16a34a" : score >= 45 ? "#ca8a04" : "#dc2626";
                   const scoreBg = score >= 70 ? "#f0fdf4" : score >= 45 ? "#fefce8" : "#fef2f2";
                   const statusLabel = score >= 70 ? "Strong Match" : score >= 45 ? "Good Match" : "Partial Match";
+                  const salaryLabel = formatSalaryRange(career.salaryRange);
                   return (
                     <div key={career.careerId}
                       className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-3.5 hover:bg-blue-50/30 transition-colors group cursor-default">
@@ -357,9 +391,9 @@ export default function Dashboard() {
                               {career.skillGaps.length} gap{career.skillGaps.length !== 1 ? "s" : ""} to fill
                             </span>
                           )}
-                          {career.salaryRange?.min > 0 && (
+                          {salaryLabel && (
                             <span className="text-[11px] font-medium" style={{ color: "#1C4D8D" }}>
-                              ₦{(career.salaryRange.min / 1000000).toFixed(1)}M–₦{(career.salaryRange.max / 1000000).toFixed(1)}M/yr
+                              {salaryLabel}
                             </span>
                           )}
                         </div>

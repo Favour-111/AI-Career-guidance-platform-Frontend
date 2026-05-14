@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  BrainCircuit,
+  Briefcase,
   TrendingUp,
   BookOpen,
   Users,
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: "#0F2854" }}>
-              <BrainCircuit className="w-[18px] h-[18px] text-white" />
+              <Briefcase className="w-[18px] h-[18px] text-white" />
             </div>
             <div>
               <span className="font-black text-[15px] leading-none" style={{ color: "#0F2854" }}>CareerAI</span>

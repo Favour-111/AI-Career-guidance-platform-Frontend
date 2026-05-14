@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import {
-  BrainCircuit, User, Mail, Lock, ArrowRight, CheckCircle, MapPin,
+  Briefcase, User, Mail, Lock, ArrowRight, CheckCircle, MapPin,
 } from "lucide-react";
 
 const FEATURES = [
@@ -43,7 +43,7 @@ export default function RegisterPage() {
     setFieldErrors({});
     const result = await dispatch(registerUser({ name: form.name, email: form.email, password: form.password }));
     if (registerUser.fulfilled.match(result)) {
-      toast.success("Account created! Welcome to CareerAI 🎉");
+      toast.success("Account created! Welcome to Career Guidiance 🎉");
       navigate("/dashboard");
     } else {
       toast.error(result.payload || "Registration failed");
@@ -68,7 +68,7 @@ export default function RegisterPage() {
         <div className="relative z-10 text-white text-center max-w-md">
           <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-5"
             style={{ background: "rgba(189,232,245,0.12)", border: "1.5px solid rgba(189,232,245,0.2)" }}>
-            <BrainCircuit className="w-8 h-8 text-white" />
+            <Briefcase className="w-8 h-8 text-white" />
           </div>
           <div className="flex items-center justify-center gap-1.5 mb-3">
             <MapPin className="w-3.5 h-3.5" style={{ color: "#BDE8F5" }} />
@@ -97,9 +97,9 @@ export default function RegisterPage() {
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: "#0F2854" }}>
-              <BrainCircuit className="w-5 h-5 text-white" />
+              <Briefcase className="w-5 h-5 text-white" />
             </div>
-            <span className="font-black text-xl" style={{ color: "#0F2854" }}>CareerAI</span>
+            <span className="font-black text-xl" style={{ color: "#0F2854" }}>Career Guidiance</span>
           </div>
 
           <h1 className="text-2xl font-black mb-1" style={{ color: "#0F2854" }}>Create your account</h1>

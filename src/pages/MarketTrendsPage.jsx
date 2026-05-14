@@ -45,10 +45,10 @@ const DEMAND_BG = {
   Low:         "#fee2e2",
 };
 const DEMAND_DESC = {
-  "Very High": "Employers are actively hiring — strong job market",
+  "Very High": "Employers are actively hiring  strong job market",
   High:        "Good availability of roles in this field",
   Medium:      "Moderate number of openings available",
-  Low:         "Fewer openings — consider upskilling or adjacent roles",
+  Low:         "Fewer openings  consider upskilling or adjacent roles",
 };
 
 export default function MarketTrendsPage() {
@@ -176,7 +176,7 @@ export default function MarketTrendsPage() {
       .map((job) => {
         const descLower = (job.title + " " + job.description).toLowerCase();
         const youHave = userSkillList.filter((skill) => descLower.includes(skill));
-        // Cap at 100% — score relative to top 5 skills to avoid inflating with tiny matches
+        // Cap at 100%  score relative to top 5 skills to avoid inflating with tiny matches
         const jobMatchPct = userSkillList.length
           ? Math.min(100, Math.round((youHave.length / Math.min(userSkillList.length, 6)) * 100))
           : 0;
@@ -367,7 +367,7 @@ export default function MarketTrendsPage() {
             )}
           </div>
           <p className="text-2xl font-black" style={{ color: "#0F2854" }}>
-            {targetCareerData.growthRate ?? "—"}%
+            {targetCareerData.growthRate ?? ""}%
           </p>
           <p className="text-xs font-semibold text-gray-500 mt-0.5">Annual Growth Rate</p>
           <p className="text-[11px] text-gray-400 mt-1 leading-snug">
@@ -377,7 +377,7 @@ export default function MarketTrendsPage() {
               ? "Healthy growth trajectory"
               : (targetCareerData.growthRate ?? 0) >= 5
               ? "Steady, moderate growth"
-              : "Slower growth — competitive market"}
+              : "Slower growth  competitive market"}
           </p>
         </div>
 
@@ -416,7 +416,7 @@ export default function MarketTrendsPage() {
           <p className="text-2xl font-black" style={{ color: "#0F2854" }}>
             {targetCareerData.averageSalary?.mid
               ? `₦${(targetCareerData.averageSalary.mid / 1_000_000).toFixed(1)}M`
-              : "—"}
+              : ""}
           </p>
           <p className="text-xs font-semibold text-gray-500 mt-0.5">Mid-level Avg. Salary / yr</p>
           <p className="text-[11px] text-gray-400 mt-1 leading-snug">

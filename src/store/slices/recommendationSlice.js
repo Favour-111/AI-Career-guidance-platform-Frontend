@@ -29,7 +29,7 @@ export const fetchRecommendations = createAsyncThunk(
     }
   },
   {
-    // Skip fetch if recommendations are already loaded — avoids white flash on navigation
+    // Skip fetch if recommendations are already loaded  avoids white flash on navigation
     condition: (_, { getState }) => {
       const { recommendation } = getState().recommendations;
       return recommendation === null;

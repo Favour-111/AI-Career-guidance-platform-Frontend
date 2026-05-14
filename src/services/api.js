@@ -77,7 +77,7 @@ api.interceptors.response.use(
     }
 
     // Any other 401 (invalid token, no token, deactivated account) means the
-    // session is non-recoverable — clear storage and redirect to login.
+    // session is non-recoverable  clear storage and redirect to login.
     if (error.response?.status === 401) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");

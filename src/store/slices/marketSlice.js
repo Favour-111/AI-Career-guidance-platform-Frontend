@@ -22,7 +22,7 @@ export const fetchMarketData = createAsyncThunk(
     }
   },
   {
-    // Skip fetch if market data is already loaded — avoids white flash on navigation
+    // Skip fetch if market data is already loaded  avoids white flash on navigation
     condition: (_, { getState }) => {
       const { careers } = getState().market;
       return careers.length === 0;

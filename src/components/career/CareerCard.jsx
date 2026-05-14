@@ -19,6 +19,32 @@ const DEMAND_STYLES = {
   Low: { bg: "#fee2e2", color: "#b91c1c" },
 };
 
+const normalizeSalaryAmount = (value) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  // Legacy fallback records were saved as "thousands" (e.g., 4500 means 4.5M).
+  if (amount >= 1000 && amount < 1000000) {
+    return amount * 1000;
+  }
+  return amount;
+};
+
+const formatCurrency = (value) => {
+  const normalizedAmount = normalizeSalaryAmount(value);
+  if (!normalizedAmount) return null;
+  return `₦${(normalizedAmount / 1000000).toFixed(1)}M`;
+};
+
+const formatSalaryRange = (salaryRange) => {
+  if (!salaryRange) return null;
+  const minLabel = formatCurrency(salaryRange.min);
+  const maxLabel = formatCurrency(salaryRange.max);
+  if (!minLabel && !maxLabel) return null;
+  if (minLabel && maxLabel) return `${minLabel} - ${maxLabel}/yr`;
+  return `${minLabel || maxLabel}/yr`;
+};
+
 export default function CareerCard({ career, showActions = true, compact = false }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -29,6 +55,7 @@ export default function CareerCard({ career, showActions = true, compact = false
   const scoreBg = score >= 70 ? "#f0fdf4" : score >= 45 ? "#fefce8" : "#fef2f2";
   const scoreLabel = score >= 70 ? "Strong Match" : score >= 45 ? "Good Match" : "Partial";
   const demand = DEMAND_STYLES[career.demand] || DEMAND_STYLES["Medium"];
+  const salaryLabel = formatSalaryRange(career.salaryRange);
 
   const handleBookmark = async () => {
     try {
@@ -53,9 +80,9 @@ export default function CareerCard({ career, showActions = true, compact = false
           </div>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             <span className="text-[11px] text-gray-400">{career.category}</span>
-            {career.salaryRange && (
+            {salaryLabel && (
               <span className="text-[11px] font-medium" style={{ color: "#1C4D8D" }}>
-                ₦{(career.salaryRange.min / 1000000).toFixed(1)}M–₦{(career.salaryRange.max / 1000000).toFixed(1)}M/yr
+                {salaryLabel}
               </span>
             )}
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
@@ -133,9 +160,9 @@ export default function CareerCard({ career, showActions = true, compact = false
               <TrendingUp className="w-3 h-3" /> {career.growthRate}% growth
             </span>
           )}
-          {career.salaryRange && (
+          {salaryLabel && (
             <span className="text-[11px] font-semibold" style={{ color: "#1C4D8D" }}>
-              ₦{(career.salaryRange.min / 1000000).toFixed(1)}M – ₦{(career.salaryRange.max / 1000000).toFixed(1)}M/yr
+              {salaryLabel}
             </span>
           )}
         </div>

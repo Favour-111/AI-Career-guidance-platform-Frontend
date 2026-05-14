@@ -24,6 +24,8 @@ const PAGE_TITLES = {
   "/learning": "Learning Paths",
   "/bookmarks": "My Bookmarks",
   "/jobs": "Job Listings",
+  "/settings": "Settings",
+  "/help-support": "Help & Support",
   "/admin": "Admin Panel",
 };
 
@@ -35,6 +37,8 @@ const QUICK_NAV = [
   { label: "Learning Paths", path: "/learning" },
   { label: "Job Listings", path: "/jobs" },
   { label: "My Bookmarks", path: "/bookmarks" },
+  { label: "Settings", path: "/settings" },
+  { label: "Help & Support", path: "/help-support" },
 ];
 
 export default function Navbar({ onMenuClick }) {
@@ -61,7 +65,7 @@ export default function Navbar({ onMenuClick }) {
   const searchInputRef = useRef(null);
   const mobileInputRef = useRef(null);
 
-  const title = PAGE_TITLES[location.pathname] || "CareerAI";
+  const title = PAGE_TITLES[location.pathname] || "Career Guidiance";
   const unread = user?.notifications?.filter((n) => !n.read).length || 0;
 
   const searchResults = searchQuery.trim()
@@ -315,41 +319,44 @@ export default function Navbar({ onMenuClick }) {
 
       {/* ── MOBILE SEARCH ROW ── */}
       {mobileSearchOpen && (
-        <div className="sm:hidden px-3 pb-3" ref={mobileSearchRef}>
-          <div className="flex items-center gap-2 rounded-2xl px-4 h-10 shadow-sm ring-2 ring-blue-200"
-            style={{ background: "#fff", border: "1.5px solid #4988C4" }}>
-            <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#4988C4" }} />
-            <input
-              ref={mobileInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchResults.length > 0) {
-                  navigate(searchResults[0].path);
-                  setMobileSearchOpen(false); setSearchQuery("");
-                }
-              }}
-              placeholder="Search pages..."
-              className="flex-1 bg-transparent outline-none text-[13.5px] font-medium placeholder-gray-400 min-w-0"
-              style={{ color: "#0F2854" }}
-            />
-            <button onClick={() => { setMobileSearchOpen(false); setSearchQuery(""); }}>
-              <X className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-          {searchResults.length > 0 && (
-            <div className="mt-1 rounded-2xl overflow-hidden shadow-xl"
-              style={{ background: "#fff", border: "1.5px solid #cddff5" }}>
-              {searchResults.map((item) => (
-                <button key={item.path}
-                  onClick={() => { navigate(item.path); setMobileSearchOpen(false); setSearchQuery(""); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left">
-                  <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#4988C4" }} />
-                  <span className="text-[13px] font-medium" style={{ color: "#0F2854" }}>{item.label}</span>
-                </button>
-              ))}
+        <div className="fixed inset-x-0 top-[60px] z-50 sm:hidden px-3 pb-3" ref={mobileSearchRef}>
+          <div className="rounded-2xl p-2 shadow-xl"
+            style={{ background: "rgba(255,255,255,0.96)", border: "1px solid #e5edf6", backdropFilter: "blur(8px)" }}>
+            <div className="flex items-center gap-2 rounded-2xl px-4 h-10 shadow-sm ring-2 ring-blue-200"
+              style={{ background: "#fff", border: "1.5px solid #4988C4" }}>
+              <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#4988C4" }} />
+              <input
+                ref={mobileInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchResults.length > 0) {
+                    navigate(searchResults[0].path);
+                    setMobileSearchOpen(false); setSearchQuery("");
+                  }
+                }}
+                placeholder="Search pages..."
+                className="flex-1 bg-transparent outline-none text-[13.5px] font-medium placeholder-gray-400 min-w-0"
+                style={{ color: "#0F2854" }}
+              />
+              <button onClick={() => { setMobileSearchOpen(false); setSearchQuery(""); }}>
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
             </div>
-          )}
+            {searchResults.length > 0 && (
+              <div className="mt-1 rounded-2xl overflow-hidden shadow-xl"
+                style={{ background: "#fff", border: "1.5px solid #cddff5" }}>
+                {searchResults.map((item) => (
+                  <button key={item.path}
+                    onClick={() => { navigate(item.path); setMobileSearchOpen(false); setSearchQuery(""); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors text-left">
+                    <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#4988C4" }} />
+                    <span className="text-[13px] font-medium" style={{ color: "#0F2854" }}>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>

@@ -73,7 +73,7 @@ const profileSlice = createSlice({
       if (state.profile) {
         state.profile.completionPercentage = action.payload;
       } else {
-        // profile not yet loaded — create a minimal stub so completion is visible
+        // profile not yet loaded  create a minimal stub so completion is visible
         state.profile = { completionPercentage: action.payload };
       }
     },
