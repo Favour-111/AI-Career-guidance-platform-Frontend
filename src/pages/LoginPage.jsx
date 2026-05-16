@@ -5,7 +5,7 @@ import { loginUser, clearError } from "../store/slices/authSlice";
 import toast from "react-hot-toast";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
-import { Briefcase, Mail, Lock, ArrowRight, MapPin, TrendingUp, Target, BookOpen } from "lucide-react";
+import { Briefcase, Mail, Lock, ArrowRight, MapPin, TrendingUp, Target, BookOpen, Eye, EyeOff } from "lucide-react";
 
 const PERKS = [
   { icon: Target, label: "AI Career Matching" },
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const { loading, error } = useSelector((s) => s.auth);
 
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
   const validate = () => {
@@ -116,10 +117,21 @@ export default function LoginPage() {
               icon={Mail} value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               error={fieldErrors.email} autoComplete="email" />
-            <Input label="Password" type="password" placeholder="••••••••"
+            <Input label="Password" type={showPassword ? "text" : "password"} placeholder="••••••••"
               icon={Lock} value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              error={fieldErrors.password} autoComplete="current-password" />
+              error={fieldErrors.password} autoComplete="current-password"
+              rightElement={(
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              )} />
 
             {error && (
               <div className="p-3 rounded-xl text-sm font-medium"

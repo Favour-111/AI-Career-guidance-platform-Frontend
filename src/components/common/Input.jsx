@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 
 const Input = forwardRef(function Input(
-  { label, error, icon: Icon, className = "", ...props },
+  { label, error, icon: Icon, rightElement = null, className = "", ...props },
   ref,
 ) {
   return (
@@ -15,9 +15,14 @@ const Input = forwardRef(function Input(
         )}
         <input
           ref={ref}
-          className={`input-field ${Icon ? "pl-10" : ""} ${error ? "border-red-400 focus:ring-red-400" : ""} ${className}`}
+          className={`input-field ${Icon ? "pl-10" : ""} ${rightElement ? "pr-11" : ""} ${error ? "border-red-400 focus:ring-red-400" : ""} ${className}`}
           {...props}
         />
+        {rightElement && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            {rightElement}
+          </div>
+        )}
       </div>
       {error && (
         <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>
