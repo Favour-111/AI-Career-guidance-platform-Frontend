@@ -29,7 +29,11 @@ import {
   Phone,
   ChevronRight,
   Award,
+  FileUp,
+  FileText,
+  Sparkles,
 } from "lucide-react";
+import api from "../services/api";
 
 const SKILL_CATEGORIES = ["technical", "soft", "language", "tool", "other"];
 const FIELD_OPTIONS = [
@@ -99,6 +103,8 @@ export default function ProfilePage() {
   const [education, setEducation] = useState([]);
   const [newEdu, setNewEdu] = useState(EMPTY_EDU);
   const [showEduForm, setShowEduForm] = useState(false);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeInsights, setResumeInsights] = useState(null);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -302,7 +308,63 @@ export default function ProfilePage() {
     { id: "skills", label: "Skills", icon: GraduationCap },
     { id: "education", label: "Education", icon: BookOpen },
     { id: "interests", label: "Interests & Goals", icon: Briefcase },
+    { id: "resume", label: "CV Import", icon: FileText },
   ];
+
+  const handleResumeUpload = async (file) => {
+    if (!file) return;
+
+    const allowed = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ];
+    const fallbackAllowedExt = /\.(pdf|doc|docx|png|jpe?g|webp)$/i.test(file.name || "");
+    if (!allowed.includes(file.type) && !fallbackAllowedExt) {
+      toast.error("Only PDF, DOC, DOCX, PNG, JPG, JPEG, and WEBP files are allowed");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("resume", file);
+
+    setResumeUploading(true);
+    try {
+      const res = await api.post("/profile/resume?autoFill=true", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const payload = res.data || {};
+      setResumeInsights(payload.extracted || null);
+
+      if (payload.profile) {
+        setForm((prev) => ({
+          ...prev,
+          bio: payload.profile.bio || prev.bio,
+          location: payload.profile.location || prev.location,
+          phone: payload.profile.phone || prev.phone,
+          website: payload.profile.website || prev.website,
+          linkedin: payload.profile.linkedin || prev.linkedin,
+          github: payload.profile.github || prev.github,
+          targetCareer: payload.profile.targetCareer || prev.targetCareer,
+          careerGoals: payload.profile.careerGoals || prev.careerGoals,
+          fieldOfStudy: payload.profile.fieldOfStudy || prev.fieldOfStudy,
+          interests: payload.profile.interests || prev.interests,
+        }));
+        setSkills(payload.profile.skills || []);
+        setEducation(payload.profile.education || []);
+      }
+
+      dispatch(fetchProfile());
+      toast.success(payload.message || "CV uploaded and profile updated");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to upload CV");
+    } finally {
+      setResumeUploading(false);
+    }
+  };
 
   if (loading)
     return (
@@ -846,6 +908,86 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ── CV IMPORT ── */}
+          {activeTab === "resume" && (
+            <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "1px solid #eef3fa", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div className="px-5 py-3" style={{ borderBottom: "1px solid #f0f5fb" }}>
+                <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#9ca3af" }}>
+                  CV Auto-Fill
+                </span>
+              </div>
+
+              <div className="p-5" style={{ borderBottom: "1px solid #f0f5fb" }}>
+                <p className="text-sm font-semibold" style={{ color: "#0F2854" }}>
+                  Upload your CV and auto-fill your profile
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Supported formats: PDF, DOC, DOCX, PNG, JPG, JPEG, WEBP. The system uses OCR for image CVs and then merges extracted details into your profile.
+                </p>
+
+                <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-8 text-center transition hover:bg-blue-50/40"
+                  style={{ borderColor: "#cfe0f6", color: "#1C4D8D" }}>
+                  <FileUp className="w-5 h-5" />
+                  <div>
+                    <p className="text-sm font-bold">Choose CV file</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Click to upload and auto-fill profile fields</p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleResumeUpload(file);
+                      e.target.value = "";
+                    }}
+                    disabled={resumeUploading}
+                  />
+                </label>
+
+                {resumeUploading && (
+                  <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
+                    <Spinner size="sm" />
+                    Extracting CV details and updating profile...
+                  </div>
+                )}
+
+                {profile?.resumeOriginalName && (
+                  <p className="mt-4 text-xs text-gray-500">
+                    Last uploaded CV: <span className="font-semibold text-gray-700">{profile.resumeOriginalName}</span>
+                  </p>
+                )}
+              </div>
+
+              {resumeInsights && (
+                <div className="p-5 space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-bold" style={{ color: "#0F2854" }}>
+                    <Sparkles className="w-4 h-4" />
+                    Extracted Insights
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                    <div className="rounded-xl p-3" style={{ background: "#f8fbff", border: "1px solid #e5edf6" }}>
+                      <p className="font-bold text-gray-600">Detected Field</p>
+                      <p className="mt-1 text-gray-800">{resumeInsights.fieldOfStudy || "Not detected"}</p>
+                    </div>
+                    <div className="rounded-xl p-3" style={{ background: "#f8fbff", border: "1px solid #e5edf6" }}>
+                      <p className="font-bold text-gray-600">Detected Target Career</p>
+                      <p className="mt-1 text-gray-800">{resumeInsights.targetCareer || "Not detected"}</p>
+                    </div>
+                    <div className="rounded-xl p-3" style={{ background: "#f8fbff", border: "1px solid #e5edf6" }}>
+                      <p className="font-bold text-gray-600">Skills Extracted</p>
+                      <p className="mt-1 text-gray-800">{Array.isArray(resumeInsights.skills) ? resumeInsights.skills.length : 0}</p>
+                    </div>
+                    <div className="rounded-xl p-3" style={{ background: "#f8fbff", border: "1px solid #e5edf6" }}>
+                      <p className="font-bold text-gray-600">Education Entries Extracted</p>
+                      <p className="mt-1 text-gray-800">{Array.isArray(resumeInsights.education) ? resumeInsights.education.length : 0}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

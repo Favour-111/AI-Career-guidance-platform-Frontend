@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Spinner from "../common/Spinner";
 import api from "../../services/api";
+import { fetchProfile } from "../../store/slices/profileSlice";
 
 const ROLE_PROFILES = {
   frontend: {
@@ -238,6 +240,8 @@ const normalizeTurnResponse = (data) => ({
 });
 
 const InterviewPrepSection = () => {
+  const dispatch = useDispatch();
+  const profileState = useSelector((state) => state.profile?.profile || null);
   const [role, setRole] = useState(DEFAULT_ROLE);
   const [customQuestion, setCustomQuestion] = useState("");
   const [stage, setStage] = useState("setup");
@@ -268,6 +272,10 @@ const InterviewPrepSection = () => {
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
   const profile = useMemo(() => ROLE_PROFILES[role] || ROLE_PROFILES[DEFAULT_ROLE], [role]);
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -485,6 +493,12 @@ const InterviewPrepSection = () => {
         question: currentQuestion,
         answer,
         history: answerHistory,
+        fieldOfStudy: profileState?.fieldOfStudy || "",
+        targetCareer: profileState?.targetCareer || "",
+        interests: Array.isArray(profileState?.interests) ? profileState.interests : [],
+        skills: Array.isArray(profileState?.skills)
+          ? profileState.skills.map((item) => item?.name).filter(Boolean)
+          : [],
       });
       const result = normalizeTurnResponse(data);
       const structuredQuestion = questionBank[turnIndex + 1] || result.followUpQuestion;
