@@ -44,7 +44,11 @@ export default function RecommendationsPage() {
     dispatch(clearRecommendationError());
     const result = await dispatch(generateRecommendations());
     if (generateRecommendations.fulfilled.match(result)) {
-      toast.success("AI recommendations generated!");
+      if (result.payload?.warning) {
+        toast(result.payload.warning);
+      } else {
+        toast.success("AI recommendations generated!");
+      }
     } else {
       toast.error(result.payload || "Failed to generate recommendations");
     }
