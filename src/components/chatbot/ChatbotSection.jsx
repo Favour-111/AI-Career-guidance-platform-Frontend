@@ -1,13 +1,28 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Spinner from "../common/Spinner";
 import api from "../../services/api";
+import { fetchProfile } from "../../store/slices/profileSlice";
 
 const DEFAULT_GREETING = {
   role: "assistant",
   content: "Hi! I’m your AI Career Assistant. Ask me anything about your career, tech stack, or professional growth!",
 };
 
+const buildGreeting = (profile) => {
+  if (profile?.targetCareer) {
+    return {
+      role: "assistant",
+      content: `Hi! I already know you’re working toward ${profile.targetCareer}. Ask me about skills, certifications, interview prep, salary expectations, or market trends for that path.`,
+    };
+  }
+
+  return DEFAULT_GREETING;
+};
+
 const ChatbotSection = () => {
+  const dispatch = useDispatch();
+  const { profile } = useSelector((state) => state.profile);
   const [messages, setMessages] = useState([DEFAULT_GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,6 +30,11 @@ const ChatbotSection = () => {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const chatEndRef = useRef(null);
+  const greeting = useMemo(() => buildGreeting(profile), [profile]);
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -30,10 +50,10 @@ const ChatbotSection = () => {
         if (history.length > 0) {
           setMessages(history);
         } else {
-          setMessages([DEFAULT_GREETING]);
+          setMessages([greeting]);
         }
       } catch (err) {
-        setMessages([DEFAULT_GREETING]);
+        setMessages([greeting]);
         setNotice("Could not load previous chat history. Starting a new session.");
       } finally {
         setHistoryLoading(false);
@@ -41,7 +61,13 @@ const ChatbotSection = () => {
     };
 
     loadHistory();
-  }, []);
+  }, [greeting]);
+
+  useEffect(() => {
+    if (messages.length === 1 && messages[0]?.role === "assistant" && messages[0]?.content === DEFAULT_GREETING.content) {
+      setMessages([greeting]);
+    }
+  }, [greeting, messages]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +78,7 @@ const ChatbotSection = () => {
     setNotice(null);
     try {
       await api.delete("/chatbot/history");
-      setMessages([DEFAULT_GREETING]);
+      setMessages([greeting]);
       setNotice("Chat history cleared.");
     } catch (err) {
       const apiMessage = err.response?.data?.error || err.message;
@@ -68,7 +94,16 @@ const ChatbotSection = () => {
     setError(null);
     setNotice(null);
     try {
-      const { data } = await api.post("/chatbot", { message: input });
+      const { data } = await api.post("/chatbot", {
+        message: input,
+        context: {
+          targetCareer: profile?.targetCareer || "",
+          fieldOfStudy: profile?.fieldOfStudy || "",
+          location: profile?.location || "",
+          interests: profile?.interests || [],
+          skills: profile?.skills || [],
+        },
+      });
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
       if (data.warning) {
         setNotice(data.warning);
@@ -109,6 +144,11 @@ const ChatbotSection = () => {
         >
           Clear History
         </button>
+      </div>
+      <div className="mb-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+        {profile?.targetCareer
+          ? `Personalized for ${profile.targetCareer}${profile.fieldOfStudy ? ` · ${profile.fieldOfStudy}` : ""}`
+          : "General guidance mode. Complete your profile to personalize every answer."}
       </div>
       <div className="flex-1 overflow-y-auto mb-4 px-2">
         {historyLoading ? (
@@ -151,10 +191,18 @@ const ChatbotSection = () => {
         />
         <button
           type="submit"
-          className="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-60 transition"
+          className="bg-primary text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-60 transition inline-flex items-center justify-center gap-2 min-w-[92px]"
           disabled={loading || historyLoading || !input.trim()}
+          aria-busy={loading}
         >
-          {loading ? <Spinner size="sm" /> : "Send"}
+          {loading ? (
+            <>
+              <Spinner size="sm" />
+              <span>Sending</span>
+            </>
+          ) : (
+            "Send"
+          )}
         </button>
       </form>
     </div>

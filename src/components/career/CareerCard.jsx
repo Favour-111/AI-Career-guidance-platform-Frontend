@@ -2,10 +2,11 @@ import {
   Bookmark,
   BookmarkCheck,
   TrendingUp,
-  ChevronRight,
-  AlertCircle,
   Wrench,
-  BarChart2,
+  Briefcase,
+  Globe2,
+  Building2,
+  Sparkles,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../services/api";
@@ -45,17 +46,27 @@ const formatSalaryRange = (salaryRange) => {
   return `${minLabel || maxLabel}/yr`;
 };
 
+const formatOpenings = (value) => {
+  const count = Number(value);
+  if (!Number.isFinite(count) || count <= 0) return null;
+  if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1)}k`;
+  return String(Math.round(count));
+};
+
 export default function CareerCard({ career, showActions = true, compact = false }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const isBookmarked = user?.bookmarkedCareers?.includes(career.careerId);
 
-  const score = career.matchScore || 0;
+  const score = career.finalScore || career.matchScore || 0;
   const scoreColor = score >= 70 ? "#16a34a" : score >= 45 ? "#ca8a04" : "#dc2626";
   const scoreBg = score >= 70 ? "#f0fdf4" : score >= 45 ? "#fefce8" : "#fef2f2";
   const scoreLabel = score >= 70 ? "Strong Match" : score >= 45 ? "Good Match" : "Partial";
   const demand = DEMAND_STYLES[career.demand] || DEMAND_STYLES["Medium"];
-  const salaryLabel = formatSalaryRange(career.salaryRange);
+  const salaryLabel = formatCurrency(career.avgSalary) || formatSalaryRange(career.salaryRange);
+  const liveOpeningsLabel = formatOpenings(career.liveOpenings);
+  const trendingSkills = career.trendingSkills || [];
+  const hiringCompanies = career.topHiringCompanies || [];
 
   const handleBookmark = async () => {
     try {
@@ -87,6 +98,11 @@ export default function CareerCard({ career, showActions = true, compact = false
             )}
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
               style={{ background: demand.bg, color: demand.color }}>{career.demand}</span>
+            {career.marketScore != null && (
+              <span className="text-[11px] font-medium text-gray-400">
+                Market {career.marketScore}%
+              </span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -154,18 +170,81 @@ export default function CareerCard({ career, showActions = true, compact = false
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="text-[10.5px] font-bold px-2 py-1 rounded-lg"
             style={{ background: demand.bg, color: demand.color }}>{career.demand} Demand</span>
+          {career.hiringTrend && (
+            <span className="flex items-center gap-1 text-[10.5px] font-semibold px-2 py-1 rounded-lg"
+              style={{ background: "#ecfeff", color: "#0e7490" }}>
+              <Sparkles className="w-3 h-3" /> {career.hiringTrend}
+            </span>
+          )}
           {career.growthRate && (
             <span className="flex items-center gap-1 text-[10.5px] font-semibold px-2 py-1 rounded-lg"
               style={{ background: "#f0f5fc", color: "#1C4D8D" }}>
               <TrendingUp className="w-3 h-3" /> {career.growthRate}% growth
             </span>
           )}
+          {liveOpeningsLabel && (
+            <span className="flex items-center gap-1 text-[10.5px] font-semibold px-2 py-1 rounded-lg"
+              style={{ background: "#f8fafc", color: "#475569" }}>
+              <Briefcase className="w-3 h-3" /> {liveOpeningsLabel} openings
+            </span>
+          )}
+          {career.remotePercent != null && (
+            <span className="flex items-center gap-1 text-[10.5px] font-semibold px-2 py-1 rounded-lg"
+              style={{ background: "#eef2ff", color: "#4338ca" }}>
+              <Globe2 className="w-3 h-3" /> {career.remotePercent}% remote
+            </span>
+          )}
           {salaryLabel && (
             <span className="text-[11px] font-semibold" style={{ color: "#1C4D8D" }}>
-              {salaryLabel}
+              {salaryLabel}{career.avgSalary ? "/yr avg" : ""}
             </span>
           )}
         </div>
+
+        {(career.compatibilityScore != null || career.marketScore != null) && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="rounded-xl px-3 py-2" style={{ background: "#f8fafc", border: "1px solid #eef3fa" }}>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Compatibility</p>
+              <p className="text-sm font-black" style={{ color: "#0F2854" }}>{career.compatibilityScore ?? score}%</p>
+            </div>
+            <div className="rounded-xl px-3 py-2" style={{ background: "#f8fafc", border: "1px solid #eef3fa" }}>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-wide">Market</p>
+              <p className="text-sm font-black" style={{ color: "#0F2854" }}>{career.marketScore ?? career.marketDemand ?? "—"}%</p>
+            </div>
+          </div>
+        )}
+
+        {career.reason && (
+          <p className="text-[11.5px] text-gray-500 leading-relaxed mb-3 rounded-xl px-3 py-2"
+            style={{ background: "#f8fafc", border: "1px solid #eef3fa" }}>
+            {career.reason}
+          </p>
+        )}
+
+        {trendingSkills.length > 0 && (
+          <div className="mb-3">
+            <p className="text-[10.5px] font-bold mb-1.5 flex items-center gap-1" style={{ color: "#0e7490" }}>
+              <Sparkles className="w-3.5 h-3.5" /> Trending skills
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {trendingSkills.slice(0, 5).map((skill) => (
+                <span key={skill} className="px-2 py-0.5 text-[10.5px] font-semibold rounded-md"
+                  style={{ background: "#ecfeff", color: "#0e7490" }}>
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hiringCompanies.length > 0 && (
+          <div className="mb-3 flex items-start gap-2 text-[11px] text-gray-400">
+            <Building2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            <span className="line-clamp-1">
+              Hiring: {hiringCompanies.slice(0, 4).join(", ")}
+            </span>
+          </div>
+        )}
 
         {/* Skill gaps */}
         {career.skillGaps?.length > 0 && (

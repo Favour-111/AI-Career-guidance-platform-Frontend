@@ -6,7 +6,7 @@ export const fetchMarketData = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const [careerRes, skillRes, statRes] = await Promise.all([
-        api.get("/market/careers?limit=30"),
+        api.get("/market/careers?limit=100"),
         api.get("/market/skills"),
         api.get("/market/stats"),
       ]);

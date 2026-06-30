@@ -5,6 +5,16 @@ import api from "../../services/api";
 import { fetchProfile } from "../../store/slices/profileSlice";
 
 const ROLE_PROFILES = {
+  software: {
+    label: "Software Engineer",
+    focus: "Programming fundamentals, algorithms, system design, debugging, and shipping reliable software.",
+    starterQuestions: [
+      "Tell me about a software project you built and the technical decisions you made.",
+      "How do you debug an issue that only appears in production?",
+      "Walk me through how you would design a reliable feature from requirements to deployment.",
+    ],
+    keywords: ["software", "engineer", "programming", "algorithms", "system design", "debugging", "testing", "architecture", "performance", "distributed"],
+  },
   frontend: {
     label: "Frontend Developer",
     focus: "UI architecture, React patterns, performance, accessibility, and product thinking.",
@@ -68,6 +78,7 @@ const ROLE_PROFILES = {
 };
 
 const DEFAULT_ROLE = "general";
+const DEFAULT_DIFFICULTY = "intermediate";
 
 const QUICK_CHECKLIST = [
   "Use a concrete example",
@@ -77,6 +88,42 @@ const QUICK_CHECKLIST = [
 ];
 
 const normalizeText = (value) => value.toLowerCase().replace(/[^a-z0-9\s/+-]/g, " ");
+
+const inferRoleKeyFromProfile = (profile) => {
+  const raw = normalizeText(`${profile?.targetCareer || ""} ${profile?.fieldOfStudy || ""}`);
+  const skillBlob = normalizeText((profile?.skills || []).map((skill) => skill?.name).filter(Boolean).join(" "));
+  const haystack = `${raw} ${skillBlob}`;
+
+  const roleMap = [
+    { key: "software", keywords: ["software engineer", "software developer", "full stack", "programming", "algorithms", "system design", "debugging"] },
+    { key: "frontend", keywords: ["frontend", "front end", "react", "next", "vue", "angular", "ui"] },
+    { key: "backend", keywords: ["backend", "back end", "api", "node", "express", "django", "flask", "spring"] },
+    { key: "data", keywords: ["data analyst", "data scientist", "analytics", "sql", "power bi", "tableau", "excel", "python"] },
+    { key: "product", keywords: ["product manager", "product analyst", "business analyst", "strategy", "product"] },
+    { key: "devops", keywords: ["devops", "cloud", "docker", "kubernetes", "aws", "azure", "gcp", "sre"] },
+  ];
+
+  return roleMap.find((item) => item.keywords.some((keyword) => haystack.includes(normalizeText(keyword))))?.key || DEFAULT_ROLE;
+};
+
+const inferDifficultyFromProfile = (profile) => {
+  const experienceYears = (profile?.experience || []).reduce((sum, item) => {
+    const start = item?.startDate ? new Date(item.startDate) : null;
+    const end = item?.endDate ? new Date(item.endDate) : null;
+    if (!start) return sum;
+
+    const finish = end || new Date();
+    const years = Math.max(0, (finish - start) / (1000 * 60 * 60 * 24 * 365.25));
+    return sum + years;
+  }, 0);
+
+  const skillCount = Array.isArray(profile?.skills) ? profile.skills.length : 0;
+  const completion = Number(profile?.completionPercentage || 0);
+
+  if (experienceYears >= 4 || skillCount >= 12 || completion >= 75) return "advanced";
+  if (experienceYears >= 1.5 || skillCount >= 6 || completion >= 45) return "intermediate";
+  return "beginner";
+};
 
 const countMatches = (text, words) => {
   const normalized = normalizeText(text);
@@ -222,6 +269,11 @@ const createQuestionBank = (roleKey, customQuestion) => {
   return base;
 };
 
+const formatInterviewDifficulty = (difficulty) => {
+  if (!difficulty) return DEFAULT_DIFFICULTY;
+  return String(difficulty).toLowerCase();
+};
+
 const normalizeTurnResponse = (data) => ({
   score: Number.isFinite(Number(data?.score)) ? Math.max(0, Math.min(100, Math.round(Number(data.score)))) : 60,
   communication: typeof data?.communication === "string" ? data.communication : "Developing",
@@ -243,6 +295,7 @@ const InterviewPrepSection = () => {
   const dispatch = useDispatch();
   const profileState = useSelector((state) => state.profile?.profile || null);
   const [role, setRole] = useState(DEFAULT_ROLE);
+  const [difficulty, setDifficulty] = useState(DEFAULT_DIFFICULTY);
   const [customQuestion, setCustomQuestion] = useState("");
   const [stage, setStage] = useState("setup");
   const [messages, setMessages] = useState([]);
@@ -251,10 +304,14 @@ const InterviewPrepSection = () => {
   const [turnIndex, setTurnIndex] = useState(0);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [answerHistory, setAnswerHistory] = useState([]);
   const [questionBank, setQuestionBank] = useState([]);
+  const [sessionId, setSessionId] = useState("");
+  const [sessionHistory, setSessionHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [autoReadAloud, setAutoReadAloud] = useState(true);
   const [reviewNarrationEnabled, setReviewNarrationEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -271,11 +328,48 @@ const InterviewPrepSection = () => {
     typeof window !== "undefined" &&
     ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
-  const profile = useMemo(() => ROLE_PROFILES[role] || ROLE_PROFILES[DEFAULT_ROLE], [role]);
+  const resolvedRoleKey = useMemo(() => {
+    if (stage !== "setup") return role;
+    if (!profileState) return role;
+    return inferRoleKeyFromProfile(profileState);
+  }, [profileState, role, stage]);
+  const resolvedDifficulty = useMemo(() => {
+    if (stage !== "setup") return formatInterviewDifficulty(difficulty);
+    if (!profileState) return formatInterviewDifficulty(difficulty);
+    return inferDifficultyFromProfile(profileState);
+  }, [profileState, difficulty, stage]);
+  const effectiveProfile = useMemo(() => ROLE_PROFILES[resolvedRoleKey] || ROLE_PROFILES[DEFAULT_ROLE], [resolvedRoleKey]);
+
+  const refreshInterviewHistory = async () => {
+    try {
+      const { data } = await api.get("/chatbot/interview-history");
+      setSessionHistory(Array.isArray(data?.sessions) ? data.sessions : []);
+    } catch (_err) {
+      setSessionHistory([]);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (profileState) {
+      setRole((current) => {
+        if (stage !== "setup") return current;
+        return inferRoleKeyFromProfile(profileState);
+      });
+      setDifficulty((current) => {
+        if (stage !== "setup") return current;
+        return inferDifficultyFromProfile(profileState);
+      });
+    }
+  }, [profileState, stage]);
+
+  useEffect(() => {
+    setHistoryLoading(true);
+    refreshInterviewHistory().finally(() => setHistoryLoading(false));
+  }, []);
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -444,20 +538,21 @@ const InterviewPrepSection = () => {
   }, [analysis, reviewNarrationEnabled, speechSupported, stage]);
 
   const startInterview = () => {
-    const bank = createQuestionBank(role, customQuestion);
+    const bank = createQuestionBank(resolvedRoleKey, customQuestion);
     const initialQuestion = bank[0];
 
+    setSessionLoading(true);
     setQuestionBank(bank);
     setMessages([
       {
         id: "welcome",
         speaker: "interviewer",
-        content: `I’ll act as a ${profile.label} interviewer. ${profile.focus} Let’s start with a realistic question.`,
+        content: `I’ll act as a ${effectiveProfile.label} interviewer. ${effectiveProfile.focus} Let’s start with a realistic question.`,
       },
       {
         id: "question-0",
         speaker: "interviewer",
-        content: buildInterviewerPrompt(profile, initialQuestion, 0),
+        content: buildInterviewerPrompt(effectiveProfile, initialQuestion, 0),
       },
     ]);
     setCurrentQuestion(initialQuestion);
@@ -472,6 +567,26 @@ const InterviewPrepSection = () => {
     dictatedFinalRef.current = "";
     dictatedInterimRef.current = "";
     dictationBaseRef.current = "";
+
+    api
+      .post("/chatbot/interview-session", {
+        roleKey: resolvedRoleKey,
+        role: effectiveProfile.label,
+        difficulty: resolvedDifficulty,
+        customQuestion,
+      })
+      .then(({ data }) => {
+        setSessionId(data?.session?.id || "");
+        if (data?.autoDetectedCareer) {
+          setNotice(`Auto-detected career: ${data.autoDetectedCareer} · Difficulty: ${String(data.difficulty || resolvedDifficulty).toUpperCase()}`);
+        }
+      })
+      .catch(() => {
+        setNotice("Interview session will continue locally, but saved history is unavailable right now.");
+      })
+      .finally(() => {
+        setSessionLoading(false);
+      });
   };
 
   const submitAnswer = async () => {
@@ -488,11 +603,14 @@ const InterviewPrepSection = () => {
     try {
       const nextAnswerHistory = [...answerHistory, { question: currentQuestion, answer }];
       const { data } = await api.post("/chatbot/interview-turn", {
-        role: profile.label,
-        focus: profile.focus,
+        role: effectiveProfile.label,
+        roleKey: resolvedRoleKey,
+        difficulty: resolvedDifficulty,
+        focus: effectiveProfile.focus,
         question: currentQuestion,
         answer,
         history: answerHistory,
+        sessionId,
         fieldOfStudy: profileState?.fieldOfStudy || "",
         targetCareer: profileState?.targetCareer || "",
         interests: Array.isArray(profileState?.interests) ? profileState.interests : [],
@@ -547,6 +665,12 @@ const InterviewPrepSection = () => {
 
       if (!nextQuestion && turnIndex + 1 >= questionBank.length) {
         setStage("review");
+        if (sessionId) {
+          api
+            .patch(`/chatbot/interview-session/${sessionId}/complete`)
+            .then(() => refreshInterviewHistory())
+            .catch(() => {});
+        }
       } else {
         setStage("interview");
       }
@@ -558,6 +682,12 @@ const InterviewPrepSection = () => {
   };
 
   const finishSession = () => {
+    if (sessionId) {
+      api
+        .patch(`/chatbot/interview-session/${sessionId}/complete`)
+        .then(() => refreshInterviewHistory())
+        .catch(() => {});
+    }
     setStage("review");
   };
 
@@ -569,10 +699,12 @@ const InterviewPrepSection = () => {
     setTurnIndex(0);
     setAnalysis(null);
     setLoading(false);
+    setSessionLoading(false);
     setError(null);
     setNotice(null);
     setAnswerHistory([]);
     setQuestionBank([]);
+    setSessionId("");
     lastSpokenMessageIdRef.current = null;
     lastSpokenReviewIdRef.current = null;
     if (speechSupported) {
@@ -598,7 +730,7 @@ const InterviewPrepSection = () => {
         answerHistory.length,
     );
 
-    const strongAnswers = answerHistory.filter((item) => estimateAnswerQuality(item.answer, profile).score >= 70).length;
+    const strongAnswers = answerHistory.filter((item) => estimateAnswerQuality(item.answer, effectiveProfile).score >= 70).length;
     const weakAnswers = answerHistory.length - strongAnswers;
 
     return {
@@ -606,7 +738,7 @@ const InterviewPrepSection = () => {
       strongAnswers,
       weakAnswers,
     };
-  }, [answerHistory, profile]);
+  }, [answerHistory, effectiveProfile]);
 
   return (
     <div className="flex flex-col h-full gap-5">
@@ -678,12 +810,12 @@ const InterviewPrepSection = () => {
 
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Select role</span>
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Target role</span>
               <select
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-primary dark:border-gray-700 dark:bg-dark-bg dark:text-white"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                disabled={stage === "interview" || loading}
+                disabled={stage === "interview" || loading || sessionLoading}
               >
                 {Object.entries(ROLE_PROFILES).map(([value, item]) => (
                   <option key={value} value={value}>
@@ -691,6 +823,30 @@ const InterviewPrepSection = () => {
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {profileState?.targetCareer
+                  ? `Auto-detected from your profile: ${effectiveProfile.label}`
+                  : "Select a role if your profile is incomplete."}
+              </p>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Difficulty</span>
+              <select
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-primary dark:border-gray-700 dark:bg-dark-bg dark:text-white"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                disabled={stage === "interview" || loading || sessionLoading}
+              >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {profileState?.experience?.length
+                  ? `Auto-suggested level: ${resolvedDifficulty}`
+                  : "We’ll default to an intermediate mock interview."}
+              </p>
             </label>
 
             <label className="block">
@@ -708,9 +864,16 @@ const InterviewPrepSection = () => {
               <button
                 className="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={startInterview}
-                disabled={loading}
+                disabled={loading || sessionLoading}
               >
-                {loading && stage === "setup" ? <Spinner size="sm" /> : "Start Interview"}
+                {sessionLoading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner size="sm" />
+                    Preparing...
+                  </span>
+                ) : (
+                  "Start Interview"
+                )}
               </button>
               <button
                 className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
@@ -724,7 +887,7 @@ const InterviewPrepSection = () => {
 
           <div className="mt-5 rounded-xl bg-gray-50 p-4 dark:bg-dark-bg">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Focus area</p>
-            <p className="mt-2 text-sm leading-6 text-gray-700 dark:text-gray-300">{profile.focus}</p>
+            <p className="mt-2 text-sm leading-6 text-gray-700 dark:text-gray-300">{effectiveProfile.focus}</p>
           </div>
         </div>
 
@@ -816,7 +979,7 @@ const InterviewPrepSection = () => {
                   placeholder="Answer naturally. Include context, actions, results, and any technical details that matter."
                   value={pendingAnswer}
                   onChange={(e) => setPendingAnswer(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || sessionLoading}
                 />
 
                 {speechInputError && (
@@ -832,7 +995,7 @@ const InterviewPrepSection = () => {
                           : "border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                       }`}
                       onClick={isListening ? stopListening : startListening}
-                      disabled={loading}
+                      disabled={loading || sessionLoading}
                     >
                       {isListening ? "Stop Mic" : "Speak Answer"}
                     </button>
@@ -840,14 +1003,14 @@ const InterviewPrepSection = () => {
                   <button
                     className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={submitAnswer}
-                    disabled={loading || !pendingAnswer.trim()}
+                    disabled={loading || sessionLoading || !pendingAnswer.trim()}
                   >
                     Submit Answer
                   </button>
                   <button
                     className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                     onClick={finishSession}
-                    disabled={loading}
+                    disabled={loading || sessionLoading}
                   >
                     End Practice
                   </button>
@@ -955,6 +1118,51 @@ const InterviewPrepSection = () => {
           </p>
         </div>
       )}
+
+      <div className="rounded-2xl border border-gray-100 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-dark-card">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-400">Saved history</p>
+            <h4 className="mt-2 text-lg font-black text-gray-900 dark:text-white">Recent interview sessions</h4>
+          </div>
+          {historyLoading && <Spinner size="sm" />}
+        </div>
+
+        <div className="mt-4 grid gap-3">
+          {sessionHistory.length === 0 ? (
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              No saved interview sessions yet. Start a mock interview and we’ll store it here.
+            </p>
+          ) : (
+            sessionHistory.slice(0, 5).map((session) => (
+              <div
+                key={session.id}
+                className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-dark-bg"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {session.targetCareer || ROLE_PROFILES[session.roleKey]?.label || "Interview Session"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {String(session.difficulty || "intermediate").toUpperCase()} · {session.status || "active"}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    {session.summary?.overallScore ? `${session.summary.overallScore}/100` : "In progress"}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {session.summary?.strongestArea
+                    ? `Strongest: ${session.summary.strongestArea}`
+                    : "No summary yet"}
+                  {session.updatedAt ? ` · Updated ${new Date(session.updatedAt).toLocaleDateString()}` : ""}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

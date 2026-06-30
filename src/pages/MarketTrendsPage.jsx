@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import { fetchProfile } from "../store/slices/profileSlice";
 import { fetchMarketData } from "../store/slices/marketSlice";
+import { formatDistanceToNow } from "date-fns";
 import {
   BarChart,
   Bar,
@@ -30,6 +31,8 @@ import {
   RefreshCw,
   MapPin,
   Building2,
+  Globe2,
+  Sparkles,
 } from "lucide-react";
 
 const DEMAND_COLOR = {
@@ -61,6 +64,10 @@ export default function MarketTrendsPage() {
   const [liveTotal, setLiveTotal]         = useState(null);
   const [liveLoading, setLiveLoading]     = useState(false);
   const [liveError, setLiveError]         = useState(null);
+  const [liveTargetCareer, setLiveTargetCareer] = useState(null);
+  const [searchedTargetCareer, setSearchedTargetCareer] = useState(null);
+  const [liveSource, setLiveSource]       = useState("The Muse");
+  const [liveSourceUrl, setLiveSourceUrl]  = useState("https://www.themuse.com");
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -74,6 +81,8 @@ export default function MarketTrendsPage() {
       const { data } = await api.get("/market/live-jobs", { params: { query } });
       setLiveJobs(data.jobs || []);
       setLiveTotal(data.total ?? null);
+      setLiveSource(data.source || "The Muse");
+      setLiveSourceUrl(data.sourceUrl || "");
     } catch (err) {
       setLiveError(
         err.response?.data?.message || "Could not load live jobs right now."
@@ -83,7 +92,7 @@ export default function MarketTrendsPage() {
     }
   }, []);
 
-  const targetCareerData = useMemo(() => {
+  const baseTargetCareerData = useMemo(() => {
     if (!profile?.targetCareer || !careers.length) return null;
     const q = profile.targetCareer.toLowerCase().trim();
     let match = careers.find((c) => c.title.toLowerCase() === q);
@@ -106,11 +115,122 @@ export default function MarketTrendsPage() {
     return match || null;
   }, [profile, careers]);
 
+  const fallbackCareerData = useMemo(() => {
+    if (!profile?.targetCareer) return null;
+
+    const fallbackSkills = (profile.skills || [])
+      .slice(0, 8)
+      .map((skill) => ({
+        name: skill.name || "Skill",
+        importance: Math.max(5, Math.min(10, skill.level || 5)),
+      }));
+
+    return {
+      careerId: `fallback:${profile.targetCareer.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")}`,
+      title: profile.targetCareer,
+      category: profile.fieldOfStudy || "General Career Insights",
+      demandLevel: "Medium",
+      growthRate: null,
+      averageSalary: null,
+      topSkills: fallbackSkills,
+      trendingSkills: (profile.interests || []).slice(0, 6),
+      trending: false,
+      remotePercent: null,
+      liveOpenings: null,
+      hiringTrend: "General",
+      marketUpdatedAt: null,
+      marketSources: [],
+      description: "General career guidance built from your profile when no exact market record is available.",
+    };
+  }, [profile]);
+
+  const exactTargetCareerData = liveTargetCareer || baseTargetCareerData || searchedTargetCareer;
+  const hasExactMarketMatch = Boolean(exactTargetCareerData);
+  const targetCareerData = exactTargetCareerData || fallbackCareerData;
+  const resolvedCareerId = baseTargetCareerData?.careerId || searchedTargetCareer?.careerId;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchSearchMatch = async () => {
+      if (baseTargetCareerData?.careerId) {
+        setSearchedTargetCareer(null);
+        return;
+      }
+
+      const query = profile?.targetCareer?.trim();
+      if (!query) {
+        setSearchedTargetCareer(null);
+        setLiveTargetCareer(null);
+        return;
+      }
+
+      setSearchedTargetCareer(null);
+      setLiveTargetCareer(null);
+
+      try {
+        const { data } = await api.get("/market/careers", {
+          params: { search: query, limit: 10 },
+        });
+        if (cancelled) return;
+
+        const results = data.careers || [];
+        if (!results.length) {
+          setSearchedTargetCareer(null);
+          return;
+        }
+
+        const normalizedQuery = query.toLowerCase();
+        const exact = results.find((career) => career.title?.toLowerCase() === normalizedQuery);
+        const partial = results.find(
+          (career) =>
+            career.title?.toLowerCase().includes(normalizedQuery) ||
+            normalizedQuery.includes(career.title?.toLowerCase()),
+        );
+
+        setSearchedTargetCareer(exact || partial || results[0]);
+      } catch {
+        if (!cancelled) setSearchedTargetCareer(null);
+      }
+    };
+
+    fetchSearchMatch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [baseTargetCareerData?.careerId, profile?.targetCareer]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchLiveCareerData = async () => {
+      const careerId = resolvedCareerId;
+      setLiveTargetCareer(null);
+      if (!careerId) {
+        return;
+      }
+
+      try {
+        const { data } = await api.get(`/market/careers/${careerId}`);
+        if (!cancelled) setLiveTargetCareer(data.career || null);
+      } catch {
+        if (!cancelled) setLiveTargetCareer(null);
+      }
+    };
+
+    fetchLiveCareerData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedCareerId]);
+
   // Fetch live Adzuna jobs whenever target career resolves
   useEffect(() => {
     const query = targetCareerData?.title || profile?.targetCareer;
     if (query) fetchLiveJobs(query);
-  }, [targetCareerData, profile?.targetCareer, fetchLiveJobs]);
+  }, [targetCareerData?.title, profile?.targetCareer, fetchLiveJobs]);
 
   const growthRank = useMemo(() => {
     if (!targetCareerData) return null;
@@ -161,6 +281,7 @@ export default function MarketTrendsPage() {
   }, [targetCareerData]);
 
   const topSkills     = targetCareerData?.topSkills || [];
+  const trendingSkills = targetCareerData?.trendingSkills || [];
   const matchedSkills = topSkills.filter((s) => userSkillNames.has(s.name?.toLowerCase()));
   const missingSkills = topSkills.filter((s) => !userSkillNames.has(s.name?.toLowerCase()));
   const matchPct = topSkills.length
@@ -245,59 +366,6 @@ export default function MarketTrendsPage() {
       </div>
     );
 
-  if (!targetCareerData)
-    return (
-      <div className="max-w-4xl mx-auto space-y-5 animate-slide-up">
-        <div className="rounded-2xl px-5 sm:px-6 py-5" style={{ background: "#0F2854" }}>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(189,232,245,0.12)", border: "1px solid rgba(189,232,245,0.15)" }}
-            >
-              <TrendingUp className="w-5 h-5" style={{ color: "#BDE8F5" }} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-white">Career Market Outlook</h1>
-              <p className="text-sm mt-0.5" style={{ color: "rgba(189,232,245,0.65)" }}>
-                Target: <span className="font-bold text-white">{profile.targetCareer}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-8 text-center" style={{ border: "1px solid #eef3fa" }}>
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "#fff7ed" }}
-          >
-            <BookOpen className="w-6 h-6" style={{ color: "#f59e0b" }} />
-          </div>
-          <h2 className="text-base font-black mb-2" style={{ color: "#0F2854" }}>
-            No market data found for "{profile.targetCareer}"
-          </h2>
-          <p className="text-sm text-gray-500 max-w-sm mx-auto mb-5 leading-relaxed">
-            This career isn't in our database yet. Try updating your profile with a supported
-            career title, or get AI-powered suggestions.
-          </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link
-              to="/profile"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-opacity"
-              style={{ background: "#0F2854" }}
-            >
-              <Settings className="w-4 h-4" /> Update Target Career
-            </Link>
-            <Link
-              to="/recommendations"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-80 transition-opacity"
-              style={{ background: "#f0f5ff", color: "#1C4D8D" }}
-            >
-              Get AI Recommendations <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-
   const demColor = DEMAND_COLOR[targetCareerData.demandLevel] || "#1C4D8D";
   const demBg    = DEMAND_BG[targetCareerData.demandLevel]    || "#dbeafe";
 
@@ -330,6 +398,26 @@ export default function MarketTrendsPage() {
             <p className="text-xs sm:text-sm mt-0.5" style={{ color: "rgba(189,232,245,0.6)" }}>
               {targetCareerData.category} · Live market data for Nigeria
             </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {targetCareerData.trending && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg"
+                  style={{ background: "rgba(34,197,94,0.14)", color: "#bbf7d0" }}>
+                  <Sparkles className="w-3 h-3" /> Trending
+                </span>
+              )}
+              {(targetCareerData.growthRate || 0) >= 20 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg"
+                  style={{ background: "rgba(73,136,196,0.18)", color: "#BDE8F5" }}>
+                  <TrendingUp className="w-3 h-3" /> Fast Growth
+                </span>
+              )}
+              {(targetCareerData.remotePercent || 0) >= 50 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg"
+                  style={{ background: "rgba(99,102,241,0.2)", color: "#c7d2fe" }}>
+                  <Globe2 className="w-3 h-3" /> Remote Friendly
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2">
             <span
@@ -350,8 +438,22 @@ export default function MarketTrendsPage() {
         </div>
       </div>
 
-      {/* 3 KEY METRICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {!hasExactMarketMatch && (
+        <div
+          className="rounded-2xl px-5 py-4"
+          style={{ background: "#fff7ed", border: "1px solid #fed7aa" }}
+        >
+          <p className="text-sm font-bold" style={{ color: "#9a3412" }}>
+            No exact market record found for "{profile.targetCareer}".
+          </p>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: "#c2410c" }}>
+            Showing a general outlook based on your profile and broader category data while we search for the closest supported career match.
+          </p>
+        </div>
+      )}
+
+      {/* KEY METRICS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           className="bg-white rounded-2xl p-4 transition-all hover:-translate-y-0.5"
           style={{ border: "1px solid #eef3fa", borderLeft: "4px solid #22c55e", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
@@ -391,11 +493,30 @@ export default function MarketTrendsPage() {
             </div>
           </div>
           <p className="text-2xl font-black" style={{ color: "#0F2854" }}>
-            {targetCareerData.demandLevel}
+            {targetCareerData.liveDemand ?? targetCareerData.demandScore ?? targetCareerData.demandLevel}
+            {(targetCareerData.liveDemand != null || targetCareerData.demandScore != null) && "%"}
           </p>
           <p className="text-xs font-semibold text-gray-500 mt-0.5">Market Demand</p>
           <p className="text-[11px] text-gray-400 mt-1 leading-snug">
             {DEMAND_DESC[targetCareerData.demandLevel] || "Demand data available"}
+          </p>
+        </div>
+
+        <div
+          className="bg-white rounded-2xl p-4 transition-all hover:-translate-y-0.5"
+          style={{ border: "1px solid #eef3fa", borderLeft: "4px solid #6366f1", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+        >
+          <div className="mb-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#eef2ff" }}>
+              <Globe2 className="w-4 h-4" style={{ color: "#4f46e5" }} />
+            </div>
+          </div>
+          <p className="text-2xl font-black" style={{ color: "#0F2854" }}>
+            {targetCareerData.remotePercent ?? (targetCareerData.remote ? 55 : 12)}%
+          </p>
+          <p className="text-xs font-semibold text-gray-500 mt-0.5">Remote Availability</p>
+          <p className="text-[11px] text-gray-400 mt-1 leading-snug">
+            Share of cached listings marked remote or hybrid
           </p>
         </div>
 
@@ -426,6 +547,32 @@ export default function MarketTrendsPage() {
           </p>
         </div>
       </div>
+
+      {(targetCareerData.liveOpenings || targetCareerData.hiringTrend || targetCareerData.marketUpdatedAt) && (
+        <div
+          className="bg-white rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          style={{ border: "1px solid #eef3fa", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#f0fdf4" }}>
+              <Briefcase className="w-5 h-5" style={{ color: "#16a34a" }} />
+            </div>
+            <div>
+              <p className="text-sm font-black" style={{ color: "#0F2854" }}>
+                {targetCareerData.liveOpenings?.toLocaleString() || targetCareerData.jobOpenings?.toLocaleString() || "Cached"} openings
+              </p>
+              <p className="text-[11px] text-gray-400">
+                Hiring trend: <span className="font-bold">{targetCareerData.hiringTrend || "Stable"}</span>
+              </p>
+            </div>
+          </div>
+          {targetCareerData.marketUpdatedAt && (
+            <p className="text-[11px] text-gray-400">
+              Refreshed {formatDistanceToNow(new Date(targetCareerData.marketUpdatedAt), { addSuffix: true })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* SALARY + SKILLS */}
       <div className="grid lg:grid-cols-2 gap-5">
@@ -534,6 +681,19 @@ export default function MarketTrendsPage() {
                 {missingSkills.slice(0, 4).map((s) => s.name).join(", ")}
                 {missingSkills.length > 4 ? ` +${missingSkills.length - 4} more` : ""}
               </p>
+            </div>
+          )}
+          {trendingSkills.length > 0 && (
+            <div className="px-5 py-3.5" style={{ background: "#ecfeff", borderTop: "1px solid #cffafe" }}>
+              <p className="text-[11px] font-bold mb-2" style={{ color: "#0e7490" }}>Trending skills from recent listings</p>
+              <div className="flex flex-wrap gap-1.5">
+                {trendingSkills.slice(0, 6).map((skill) => (
+                  <span key={skill} className="text-[10px] px-2 py-0.5 rounded-md font-semibold"
+                    style={{ background: "#fff", color: "#0e7490", border: "1px solid #a5f3fc" }}>
+                    {skill}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -685,14 +845,20 @@ export default function MarketTrendsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <a
-              href="https://www.themuse.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              via The Muse
-            </a>
+            {liveSourceUrl ? (
+              <a
+                href={liveSourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                via {liveSource}
+              </a>
+            ) : (
+              <span className="text-[10px] font-semibold text-gray-400">
+                via {liveSource}
+              </span>
+            )}
             <button
               onClick={() => {
                 const q = targetCareerData?.title || profile?.targetCareer;
