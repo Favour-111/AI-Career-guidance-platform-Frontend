@@ -8,7 +8,6 @@ import {
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMe } from "./store/slices/authSlice";
-import { setDarkMode } from "./store/slices/themeSlice";
 
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -39,16 +38,15 @@ function ScrollToTop() {
 function App() {
   const dispatch = useDispatch();
   const { initializing } = useSelector((state) => state.auth);
-  const { darkMode } = useSelector((state) => state.theme);
 
   useEffect(() => {
-    // Apply saved dark mode on mount
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
+    if (typeof document !== "undefined") {
       document.documentElement.classList.remove("dark");
     }
-  }, [darkMode]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("darkMode");
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -62,10 +60,10 @@ function App() {
 
   if (initializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-dark-bg">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-3 text-sm text-gray-500">
             Loading Career Guidiance…
           </p>
         </div>

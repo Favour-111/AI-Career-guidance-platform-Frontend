@@ -1,35 +1,35 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const getInitialDark = () => {
-  if (typeof window !== "undefined") {
-    const saved = localStorage.getItem("darkMode");
-    if (saved !== null) return JSON.parse(saved);
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+const forceLightMode = () => {
+  if (typeof window === "undefined") {
+    return false;
   }
+
+  localStorage.removeItem("darkMode");
+  document.documentElement.classList.remove("dark");
   return false;
+};
+
+const clearLightMode = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem("darkMode");
+  document.documentElement.classList.remove("dark");
 };
 
 const themeSlice = createSlice({
   name: "theme",
-  initialState: { darkMode: getInitialDark() },
+  initialState: { darkMode: forceLightMode() },
   reducers: {
     toggleDarkMode: (state) => {
-      state.darkMode = !state.darkMode;
-      localStorage.setItem("darkMode", JSON.stringify(state.darkMode));
-      if (state.darkMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      state.darkMode = false;
+      clearLightMode();
     },
-    setDarkMode: (state, action) => {
-      state.darkMode = action.payload;
-      localStorage.setItem("darkMode", JSON.stringify(action.payload));
-      if (action.payload) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+    setDarkMode: (state) => {
+      state.darkMode = false;
+      clearLightMode();
     },
   },
 });

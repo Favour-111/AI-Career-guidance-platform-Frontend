@@ -10,6 +10,8 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
+    background: #ffffff;
+    color-scheme: light;
   }
 
   body {
@@ -19,12 +21,14 @@
       color 0.3s ease;
     height: 100%;
     overflow: hidden;
+    background: #ffffff;
   }
 
   #root {
     height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    background: #ffffff;
   }
 
   /* Fix mobile keyboard expanding layout — svh stays fixed when keyboard opens */
@@ -32,15 +36,11 @@
     min-height: 100svh !important;
   }
 
-  .dark body {
-    @apply bg-dark-bg text-gray-100;
-  }
-
   ::-webkit-scrollbar {
     @apply w-1.5;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-dark-surface;
+    @apply bg-gray-100;
   }
   ::-webkit-scrollbar-thumb {
     @apply bg-secondary rounded-full;
@@ -60,8 +60,8 @@
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 font-medium text-sm
-           hover:bg-gray-100 dark:hover:bg-dark-card active:scale-95 transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-gray-600 font-medium text-sm
+           hover:bg-gray-100 active:scale-95 transition-all duration-200;
   }
 
   /* Cards */
@@ -81,14 +81,14 @@
 
   /* Form inputs */
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface
-           text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white
+           text-gray-800 placeholder-gray-400 text-sm
            focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent
            transition-all duration-200;
   }
 
   .input-label {
-    @apply block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5;
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
   }
 
   /* Badges */
@@ -97,19 +97,19 @@
   }
 
   .badge-primary {
-    @apply badge bg-primary/10 text-primary dark:bg-primary/20 dark:text-secondary;
+    @apply badge bg-primary/10 text-primary;
   }
 
   .badge-success {
-    @apply badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+    @apply badge bg-green-100 text-green-700;
   }
 
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400;
+    @apply badge bg-yellow-100 text-yellow-700;
   }
 
   .badge-danger {
-    @apply badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+    @apply badge bg-red-100 text-red-700;
   }
 
   /* Section titles */
@@ -192,9 +192,4 @@
 /* Chart tooltip override */
 .recharts-tooltip-wrapper {
   @apply !shadow-card-hover !rounded-xl;
-}
-
-/* Dark mode transitions */
-.dark .card {
-  @apply bg-dark-card border-dark-border;
 }

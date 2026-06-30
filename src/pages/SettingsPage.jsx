@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setDarkMode } from "../store/slices/themeSlice";
 import { updatePreferences } from "../store/slices/authSlice";
 import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { darkMode } = useSelector((state) => state.theme);
 
   const [emailNotifications, setEmailNotifications] = useState(
     user?.preferences?.emailNotifications ?? true,
@@ -19,11 +17,11 @@ export default function SettingsPage() {
   }, [user?.preferences?.emailNotifications]);
 
   const handleSave = async () => {
-    setSaving(true);
+      setSaving(true);
     try {
       await dispatch(
         updatePreferences({
-          darkMode,
+          darkMode: false,
           emailNotifications,
         }),
       ).unwrap();
@@ -48,20 +46,17 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-gray-100 p-4 dark:border-gray-800">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Dark mode</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Appearance</p>
                 <p className="text-xs text-gray-500 dark:text-gray-300">
-                  Use a dark color theme across the platform.
+                  Light mode is enforced across the platform.
                 </p>
               </div>
               <button
-                onClick={() => dispatch(setDarkMode(!darkMode))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  darkMode
-                    ? "bg-[#0F2854] text-white"
-                    : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100"
-                }`}
+                type="button"
+                disabled
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-500 cursor-default dark:bg-gray-700 dark:text-gray-100"
               >
-                {darkMode ? "Enabled" : "Disabled"}
+                Locked
               </button>
             </div>
           </div>

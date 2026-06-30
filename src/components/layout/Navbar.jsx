@@ -1,13 +1,11 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toggleDarkMode } from "../../store/slices/themeSlice";
 import { markNotificationRead } from "../../store/slices/authSlice";
 import api from "../../services/api";
 import { useState, useRef, useEffect } from "react";
 import {
   Menu,
   Sun,
-  Moon,
   Bell,
   Search,
   ChevronDown,
@@ -46,7 +44,6 @@ export default function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
-  const { darkMode } = useSelector((state) => state.theme);
   const { recommendation } = useSelector((state) => state.recommendations);
   const bookmarkedIds = user?.bookmarkedCareers || [];
   const bookmarkedCareers = (recommendation?.careers || []).filter((c) =>
@@ -253,11 +250,14 @@ export default function Navbar({ onMenuClick }) {
             )}
           </div>
 
-          {/* Dark mode (hidden on xs to save space) */}
-          <button onClick={() => dispatch(toggleDarkMode())}
-            className="hidden xs:flex w-9 h-9 items-center justify-center rounded-xl transition-colors hover:bg-gray-100"
-            style={{ color: "#4988C4" }} title="Toggle dark mode">  
-            {darkMode ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+          {/* Light mode locked */}
+          <button
+            type="button"
+            disabled
+            className="hidden xs:flex w-9 h-9 items-center justify-center rounded-xl bg-gray-50 text-[#4988C4] cursor-default"
+            title="Light mode is locked"
+          >
+            <Sun className="w-[18px] h-[18px]" />
           </button>
 
           {/* Notifications */}
@@ -362,4 +362,3 @@ export default function Navbar({ onMenuClick }) {
     </header>
   );
 }
-
