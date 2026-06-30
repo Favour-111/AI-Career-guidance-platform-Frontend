@@ -8,6 +8,7 @@ import {
   Building2,
   Sparkles,
 } from "lucide-react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import api from "../../services/api";
 import { setUser } from "../../store/slices/authSlice";
@@ -56,6 +57,7 @@ const formatOpenings = (value) => {
 export default function CareerCard({ career, showActions = true, compact = false }) {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const [showAllSkillGaps, setShowAllSkillGaps] = useState(false);
   const isBookmarked = user?.bookmarkedCareers?.includes(career.careerId);
 
   const score = career.finalScore || career.matchScore || 0;
@@ -67,6 +69,8 @@ export default function CareerCard({ career, showActions = true, compact = false
   const liveOpeningsLabel = formatOpenings(career.liveOpenings);
   const trendingSkills = career.trendingSkills || [];
   const hiringCompanies = career.topHiringCompanies || [];
+  const skillGaps = career.skillGaps || [];
+  const visibleSkillGaps = showAllSkillGaps ? skillGaps : skillGaps.slice(0, 5);
 
   const handleBookmark = async () => {
     try {
@@ -247,20 +251,27 @@ export default function CareerCard({ career, showActions = true, compact = false
         )}
 
         {/* Skill gaps */}
-        {career.skillGaps?.length > 0 && (
+        {skillGaps.length > 0 && (
           <div className="pt-3" style={{ borderTop: "1px solid #f0f5fc" }}>
             <p className="text-[10.5px] font-bold mb-1.5 flex items-center gap-1" style={{ color: "#ca8a04" }}>
               <Wrench className="w-3.5 h-3.5" /> Skills to develop
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {career.skillGaps.slice(0, 5).map((gap) => (
-                <span key={gap} className="px-2 py-0.5 text-[10.5px] font-semibold rounded-md"
+              {visibleSkillGaps.map((gap, index) => (
+                <span key={`${gap}-${index}`} className="px-2 py-0.5 text-[10.5px] font-semibold rounded-md"
                   style={{ background: "#fef9c3", color: "#92400e" }}>
                   {gap}
                 </span>
               ))}
-              {career.skillGaps.length > 5 && (
-                <span className="text-[10.5px] text-gray-400">+{career.skillGaps.length - 5} more</span>
+              {skillGaps.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllSkillGaps((current) => !current)}
+                  className="px-2 py-0.5 text-[10.5px] font-bold rounded-md transition-colors hover:bg-amber-100"
+                  style={{ color: "#92400e" }}
+                >
+                  {showAllSkillGaps ? "See less" : `+${skillGaps.length - 5} more`}
+                </button>
               )}
             </div>
           </div>
